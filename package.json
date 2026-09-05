@@ -1,0 +1,26 @@
+{
+  "name": "kubementor",
+  "version": "1.0.0",
+  "description": "An AI-Assisted DevOps Troubleshooting & Deployment Simulation Platform",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "start:backend": "cd backend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "kubernetes",
+    "devops",
+    "ai",
+    "troubleshooting",
+    "react",
+    "express",
+    "mongodb",
+    "vite",
+    "tailwindcss"
+  ],
+  "author": "KubeMentor Team",
+  "license": "MIT"
+}
