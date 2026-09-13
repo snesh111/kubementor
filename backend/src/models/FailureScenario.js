@@ -48,6 +48,43 @@ const failureScenarioSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    concept: {
+      whatIsIt: {
+        type: String,
+        default: '',
+      },
+      whyItHappens: [
+        {
+          type: String,
+        },
+      ],
+      whenItHappens: {
+        type: String,
+        default: '',
+      },
+      productionImpact: {
+        type: String,
+        default: '',
+      },
+      troubleshootingPlaybook: [
+        {
+          stepNumber: Number,
+          title: String,
+          description: String,
+          command: String,
+        },
+      ],
+      commonMistakes: [
+        {
+          type: String,
+        },
+      ],
+      proTips: [
+        {
+          type: String,
+        },
+      ],
+    },
   },
   {
     timestamps: true,

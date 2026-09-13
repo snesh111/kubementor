@@ -56,6 +56,15 @@ export const parseAndEnforceSandboxManifests = (rawYamlContent, sandboxNamespace
       };
     }
 
+    // Explicit namespace check: learner cannot specify another namespace
+    if (doc.metadata?.namespace && sandboxNamespace && doc.metadata.namespace !== sandboxNamespace) {
+      return {
+        valid: false,
+        error: `Security Violation: Explicit namespace '${doc.metadata.namespace}' does not match assigned lab namespace '${sandboxNamespace}'.`,
+        documents: [],
+      };
+    }
+
     // Clone document and override metadata.namespace to sandboxNamespace
     const enforcedDoc = JSON.parse(JSON.stringify(doc));
     if (!enforcedDoc.metadata) {

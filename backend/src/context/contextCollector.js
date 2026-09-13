@@ -35,12 +35,14 @@ export const contextCollector = {
    * 3 & 8. Collect Deployment & Resource Context
    */
   collectDeploymentContext: async (namespace, deploymentRecord) => {
-    const depName = deploymentRecord.resources?.find((r) => r.kind === 'Deployment')?.name || 'web-app';
+    const depResource = deploymentRecord?.resources?.find((r) => r.kind === 'Deployment');
+    const depName = depResource?.name || 'web-app';
+    const replicas = depResource?.replicas ?? 1;
 
     if (!k8sClientWrapper.isConnected || !k8sClientWrapper.appsV1Api) {
       return {
         name: depName,
-        replicas: 1,
+        replicas,
         availableReplicas: 1,
         strategy: 'RollingUpdate',
         containers: [

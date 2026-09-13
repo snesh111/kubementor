@@ -10,10 +10,10 @@ export const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, token, user, isInitializing, loading } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (token && !user && !isInitializing) {
+    if (token && !user) {
       dispatch(fetchProfileThunk());
     }
-  }, [token, user, isInitializing, dispatch]);
+  }, [token, user, dispatch]);
 
   if (isInitializing || (token && !user && loading)) {
     return (

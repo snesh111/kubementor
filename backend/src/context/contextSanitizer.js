@@ -1,4 +1,4 @@
-const SENSITIVE_KEY_REGEX = /(password|passwd|secret|token|api_key|apikey|private_key|auth|bearer|credential|authorization|cert)/i;
+const SENSITIVE_KEY_REGEX = /(password|passwd|secret|token|api_?key|private_?key|auth|bearer|credential|authorization|cert|private)/i;
 
 /**
  * Recursively sanitize objects and arrays to redact sensitive credentials
@@ -11,8 +11,13 @@ export const sanitizeContextData = (data) => {
   }
 
   if (typeof data === 'string') {
-    // Check if string looks like an authorization header or secret key
-    if (data.toLowerCase().startsWith('bearer ') || data.length > 100 && SENSITIVE_KEY_REGEX.test(data)) {
+    // Check if string looks like an authorization header, private key, or secret
+    if (
+      data.toLowerCase().startsWith('bearer ') ||
+      data.includes('BEGIN PRIVATE KEY') ||
+      data.includes('BEGIN RSA PRIVATE KEY') ||
+      (data.length > 100 && SENSITIVE_KEY_REGEX.test(data))
+    ) {
       return '[REDACTED_SENSITIVE_VALUE]';
     }
     return data;

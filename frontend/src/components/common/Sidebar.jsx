@@ -1,12 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FolderKanban, LayoutDashboard, AlertTriangle, Cpu, Rocket, User } from 'lucide-react';
+import { Terminal, FolderKanban, Cpu, Rocket, User } from 'lucide-react';
 
 export const Sidebar = () => {
   const navItems = [
-    { label: 'Projects', path: '/projects', icon: FolderKanban },
-    { label: 'Control Center', path: '/', icon: LayoutDashboard },
-    { label: 'Scenarios', path: '/scenarios', icon: AlertTriangle },
+    { label: 'Practice Labs', path: '/learn', icon: Terminal },
+    { label: 'Custom Workspaces', path: '/projects', icon: FolderKanban },
     { label: 'AI Analyzer', path: '/analyzer', icon: Cpu },
     { label: 'Deploy Simulation', path: '/deployment', icon: Rocket },
     { label: 'My Profile', path: '/profile', icon: User },
@@ -16,7 +15,7 @@ export const Sidebar = () => {
     <aside className="w-64 bg-slate-900/60 border-r border-slate-800 flex flex-col h-[calc(100vh-4rem)] sticky top-16">
       <div className="p-4 flex-1 overflow-y-auto">
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-3">
-          DevOps Workspace
+          DevOps Platform
         </p>
         <nav className="space-y-1">
           {navItems.map((item) => {

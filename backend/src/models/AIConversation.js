@@ -56,6 +56,14 @@ const aiConversationSchema = new mongoose.Schema(
           default: null,
         },
         evidence: [String],
+        provider: {
+          type: String,
+          default: null,
+        },
+        isFallback: {
+          type: Boolean,
+          default: null,
+        },
         createdAt: {
           type: Date,
           default: Date.now,

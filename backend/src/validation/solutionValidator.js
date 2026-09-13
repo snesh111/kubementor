@@ -1,8 +1,8 @@
 import statusService from '../kubernetes/statusService.js';
 import validationRules from './validationRules.js';
 
-const TIMEOUT_SECONDS = parseInt(process.env.VALIDATION_TIMEOUT_SECONDS || '15', 10);
-const POLL_INTERVAL_MS = parseInt(process.env.VALIDATION_POLL_INTERVAL_MS || '2000', 10);
+const TIMEOUT_SECONDS = parseInt(process.env.VALIDATION_TIMEOUT_SECONDS || '4', 10);
+const POLL_INTERVAL_MS = parseInt(process.env.VALIDATION_POLL_INTERVAL_MS || '500', 10);
 
 export const solutionValidator = {
   /**

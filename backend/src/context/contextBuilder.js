@@ -17,14 +17,15 @@ export const buildStructuredContext = ({
 }) => {
   // Determine overall observed failure state
   const firstCrashPod = podContext.find(
-    (p) => p.phase === 'Failed' || p.restarts > 0 || p.containers?.some((c) => c.state === 'waiting')
+    (p) => p.phase === 'Failed' || p.restarts > 0 || p.containers?.some((c) => c.state === 'waiting' || c.ready === false)
   );
+  const allPodsHealthy = podContext.length > 0 && podContext.every((p) => p.ready === true && p.phase === 'Running');
 
   const observedFailure = {
-    status: scenarioContext.expectedFailure || 'Failed',
-    reason: firstCrashPod?.containers?.[0]?.reason || scenarioContext.expectedFailure || 'Unknown',
+    status: allPodsHealthy ? 'Running' : (firstCrashPod?.containers?.[0]?.reason || scenarioContext.expectedFailure || 'Failed'),
+    reason: allPodsHealthy ? 'WorkloadHealthy' : (firstCrashPod?.containers?.[0]?.reason || scenarioContext.expectedFailure || 'Unknown'),
     affectedResource: `Deployment/${deploymentContext.name || 'web-app'}`,
-    podName: firstCrashPod?.name || 'N/A',
+    podName: firstCrashPod?.name || podContext[0]?.name || 'N/A',
     restartCount: firstCrashPod?.restarts || 0,
   };
 

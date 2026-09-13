@@ -1,13 +1,18 @@
 import app from './app.js';
 import config from './config/env.js';
 import { connectDB } from './config/db.js';
+import k8sClientWrapper from './kubernetes/k8sClient.js';
+import { initTerminalWebSocket } from './services/terminalSocket.js';
 
 const startServer = async () => {
   try {
     // 1. Connect to MongoDB
     await connectDB();
 
-    // 2. Start HTTP Server
+    // 2. Check Kubernetes connectivity (simulation fallback if unreachable)
+    await k8sClientWrapper.verifyConnection().catch(() => {});
+
+    // 3. Start HTTP Server
     const server = app.listen(config.port, () => {
       console.log(`
 =====================================================
@@ -19,6 +24,9 @@ const startServer = async () => {
 =====================================================
       `);
     });
+
+    // 4. Attach Interactive Terminal WebSocket Server
+    initTerminalWebSocket(server);
 
     // Handle Unhandled Rejections
     process.on('unhandledRejection', (err) => {

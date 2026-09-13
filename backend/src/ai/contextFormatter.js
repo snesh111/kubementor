@@ -15,21 +15,41 @@ export const formatContextForAI = (snapshotObj) => {
   const configMaps = ctx.configMaps || [];
   const manifestDiff = ctx.manifestDiff || [];
   const observed = ctx.observedFailure || {};
+  const scratchpad = ctx.scratchpad || snapshotObj.scratchpad || {};
 
   const pod = pods[0] || {};
   const container = pod.containers?.[0] || {};
 
-  const formattedEvents = events.slice(0, 5).map((e) => `[${e.type || 'Normal'}] ${e.reason}: ${e.message}`).join('\n');
+  const formattedEvents = events.slice(0, 10).map((e) => `[${e.type || 'Normal'}] ${e.reason}: ${e.message}`).join('\n');
   const formattedDiff = manifestDiff.map((d) => `${d.field}: before="${d.before}" after="${d.after}"`).join('\n');
 
+  let scratchpadSection = 'None recorded yet.';
+  if (
+    scratchpad.evidence ||
+    scratchpad.hypothesis ||
+    scratchpad.rootCause ||
+    scratchpad.plannedFix ||
+    scratchpad.result ||
+    scratchpad.generalNotes
+  ) {
+    scratchpadSection = `
+Evidence: ${scratchpad.evidence || '(empty)'}
+Hypothesis: ${scratchpad.hypothesis || '(empty)'}
+Suspected Root Cause: ${scratchpad.rootCause || '(empty)'}
+Planned Fix: ${scratchpad.plannedFix || '(empty)'}
+Result: ${scratchpad.result || '(empty)'}
+General Notes: ${scratchpad.generalNotes || '(empty)'}
+`;
+  }
+
   return `
-=== KUBEMENTOR RUNTIME TELEMETRY (SNAPSHOT v1.0) ===
-SCENARIO: ${scenario.name} (${scenario.id}) | Category: ${scenario.category} | Expected Failure: ${scenario.expectedFailure}
-NAMESPACE: ${cluster.namespace}
+<<<TELEMETRY_CONTEXT>>>
+SCENARIO: ${scenario.name || scenario.id || 'Kubernetes Lab'} (${scenario.id || 'scenario'}) | Category: ${scenario.category || 'Reliability'} | Expected Failure: ${scenario.expectedFailure || 'Failure'}
+NAMESPACE: ${cluster.namespace || 'sandbox'}
 
 DEPLOYMENT:
 Name: ${deployment.name || 'web-app'}
-Replicas: Desired=${deployment.replicas || 1}, Available=${deployment.availableReplicas || 0}
+Replicas: Desired=${deployment.replicas ?? 1}, Available=${deployment.availableReplicas ?? 0}
 
 POD STATUS:
 Pod Name: ${pod.name || 'N/A'}
@@ -51,14 +71,18 @@ MANIFEST DIFF (Original vs Injected Sandbox Config):
 ${formattedDiff || 'No manifest diff recorded.'}
 
 SERVICES & ENDPOINTS:
-${services.map((s) => `Service: ${s.name} | Type: ${s.type} | ClusterIP: ${s.clusterIP} | Ports: ${JSON.stringify(s.ports)}`).join('\n') || 'None'}
+${services.map((s) => `Service: ${s.name} | Type: ${s.type} | ClusterIP: ${s.clusterIP} | Ports: ${JSON.stringify(s.ports)} | Selector: ${JSON.stringify(s.selector || {})}`).join('\n') || 'None'}
 
 INGRESSES:
 ${ingresses.map((i) => `Ingress: ${i.name} | Hosts: ${i.hosts?.join(', ')} | TLS Secret: ${i.tlsSecretName || 'None'}`).join('\n') || 'None'}
 
 CONFIGMAPS:
 ${configMaps.map((c) => `ConfigMap: ${c.name} | Exists: ${c.exists}`).join('\n') || 'None'}
-===================================================
+
+<<<LEARNER_INVESTIGATION_NOTES>>>
+${scratchpadSection}
+<<<END_LEARNER_INVESTIGATION_NOTES>>>
+<<<END_TELEMETRY_CONTEXT>>>
 `;
 };
 

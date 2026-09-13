@@ -88,7 +88,9 @@ export const aiService = {
       'diagnose',
       null,
       responseObj.diagnosis?.confidence,
-      responseObj.evidence
+      responseObj.evidence,
+      responseObj.provider || 'fallback',
+      responseObj.isFallback ?? true
     );
 
     return {
@@ -134,7 +136,9 @@ export const aiService = {
       'hint',
       level,
       responseObj.diagnosis?.confidence,
-      responseObj.evidence
+      responseObj.evidence,
+      responseObj.provider || 'fallback',
+      responseObj.isFallback ?? true
     );
 
     return {
@@ -224,7 +228,9 @@ export const aiService = {
       'chat',
       null,
       responseObj.diagnosis?.confidence,
-      responseObj.evidence
+      responseObj.evidence,
+      responseObj.provider || 'fallback',
+      responseObj.isFallback ?? true
     );
 
     return {
@@ -262,7 +268,9 @@ export const aiService = {
     mode,
     hintLevel = null,
     confidence = null,
-    evidence = []
+    evidence = [],
+    provider = null,
+    isFallback = null
   ) => {
     await AIConversation.updateOne(
       { scenarioAttempt: attemptId, project: projectId, user: userId },
@@ -282,6 +290,8 @@ export const aiService = {
             hintLevel,
             confidence,
             evidence,
+            provider,
+            isFallback,
             createdAt: new Date(),
           },
         },

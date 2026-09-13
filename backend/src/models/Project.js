@@ -29,6 +29,16 @@ const projectSchema = new mongoose.Schema(
       },
       default: 'draft',
     },
+    isLabInternal: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    labId: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,

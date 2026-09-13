@@ -2,11 +2,11 @@ import api from './api';
 
 export const scenarioService = {
   getScenarios: async (projectId) => {
-    return await api.get(`/projects/${projectId}/scenarios`);
+    return projectId ? await api.get(`/projects/${projectId}/scenarios`) : await api.get('/scenarios');
   },
 
   getScenarioById: async (projectId, scenarioId) => {
-    return await api.get(`/projects/${projectId}/scenarios/${scenarioId}`);
+    return projectId ? await api.get(`/projects/${projectId}/scenarios/${scenarioId}`) : await api.get(`/scenarios/${scenarioId}`);
   },
 
   startScenario: async (projectId, scenarioId, deploymentId) => {

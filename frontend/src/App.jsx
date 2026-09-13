@@ -3,11 +3,12 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import LearnCatalog from './pages/LearnCatalog';
+import LabWorkspace from './pages/LabWorkspace';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
-import Scenarios from './pages/Scenarios';
 import Analyzer from './pages/Analyzer';
 import Deployment from './pages/Deployment';
 import Login from './pages/Login';
@@ -17,7 +18,17 @@ import NotFound from './pages/NotFound';
 export const App = () => {
   return (
     <Routes>
-      {/* Protected App Routes */}
+      {/* Full-screen Interactive Lab Workspace */}
+      <Route
+        path="lab/:labId"
+        element={
+          <ProtectedRoute>
+            <LabWorkspace />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected App Routes with Standard MainLayout */}
       <Route
         element={
           <ProtectedRoute>
@@ -25,12 +36,13 @@ export const App = () => {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<Navigate to="/projects" replace />} />
+        <Route path="/" element={<Navigate to="/learn" replace />} />
+        <Route path="learn" element={<LearnCatalog />} />
+        <Route path="scenarios" element={<Navigate to="/learn" replace />} />
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />
         <Route path="profile" element={<Profile />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="scenarios" element={<Scenarios />} />
         <Route path="analyzer" element={<Analyzer />} />
         <Route path="deployment" element={<Deployment />} />
         <Route path="*" element={<NotFound />} />

@@ -30,49 +30,58 @@ export const namespaceService = {
       return { created: false, existing: true, namespace: namespaceName };
     } catch (err) {
       if (err.response && err.response.statusCode === 404) {
-        // Create new sandbox namespace
-        const nsManifest = {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: {
-            name: namespaceName,
-            labels: {
-              'app.kubernetes.io/managed-by': 'kubementor',
-              'kubementor.io/sandbox': 'true',
-            },
-          },
-        };
-
-        await k8sClientWrapper.coreV1Api.createNamespace(nsManifest);
-        console.log(`[Namespace Engine] Created sandbox namespace '${namespaceName}'.`);
-
-        // Apply basic ResourceQuota to prevent cluster resource starvation
         try {
-          const quotaManifest = {
+          // Create new sandbox namespace
+          const nsManifest = {
             apiVersion: 'v1',
-            kind: 'ResourceQuota',
+            kind: 'Namespace',
             metadata: {
-              name: 'sandbox-quota',
-              namespace: namespaceName,
-            },
-            spec: {
-              hard: {
-                'requests.cpu': '2',
-                'requests.memory': '2Gi',
-                'limits.cpu': '4',
-                'limits.memory': '4Gi',
-                pods: '10',
+              name: namespaceName,
+              labels: {
+                'app.kubernetes.io/managed-by': 'kubementor',
+                'kubementor.io/sandbox': 'true',
               },
             },
           };
-          await k8sClientWrapper.coreV1Api.createNamespacedResourceQuota(namespaceName, quotaManifest);
-        } catch (qErr) {
-          console.warn('[Namespace Engine] Quota application warning:', qErr.message);
-        }
 
-        return { created: true, namespace: namespaceName };
+          await k8sClientWrapper.coreV1Api.createNamespace(nsManifest);
+          console.log(`[Namespace Engine] Created sandbox namespace '${namespaceName}'.`);
+
+          // Apply basic ResourceQuota to prevent cluster resource starvation
+          try {
+            const quotaManifest = {
+              apiVersion: 'v1',
+              kind: 'ResourceQuota',
+              metadata: {
+                name: 'sandbox-quota',
+                namespace: namespaceName,
+              },
+              spec: {
+                hard: {
+                  'requests.cpu': '2',
+                  'requests.memory': '2Gi',
+                  'limits.cpu': '4',
+                  'limits.memory': '4Gi',
+                  pods: '10',
+                },
+              },
+            };
+            await k8sClientWrapper.coreV1Api.createNamespacedResourceQuota(namespaceName, quotaManifest);
+          } catch (qErr) {
+            console.warn('[Namespace Engine] Quota application warning:', qErr.message);
+          }
+
+          return { created: true, namespace: namespaceName };
+        } catch (createErr) {
+          console.warn('[Namespace Engine] Could not create namespace on cluster, switching to simulation:', createErr.message);
+          k8sClientWrapper.isConnected = false;
+          return { created: true, simulated: true, namespace: namespaceName };
+        }
       }
-      throw err;
+
+      console.warn(`[Namespace Engine] Cluster unreachable (${err.message}). Activating sandbox simulation.`);
+      k8sClientWrapper.isConnected = false;
+      return { created: true, simulated: true, namespace: namespaceName };
     }
   },
 
@@ -95,6 +104,10 @@ export const namespaceService = {
       }
       throw err;
     }
+  },
+
+  deleteSandboxNamespace: async (namespaceName) => {
+    return await namespaceService.deleteNamespace(namespaceName);
   },
 };
 

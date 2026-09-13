@@ -18,8 +18,9 @@ export const explainabilityEngine = {
       return {
         ruleId,
         category: f.category || 'Best Practices',
-        severity: (f.severity || 'INFO').toUpperCase(),
+        severity: normalizeSeverity(f.severity),
         title: f.title || f.message || 'Manifest Configuration Issue',
+        description: f.description || f.why || f.message || getWhyExplanation(ruleId, f.category, f.title),
         message: f.message || f.description || f.title,
         deduction,
         resource: f.resource || 'Kubernetes Manifest',
@@ -95,6 +96,16 @@ const getCategoryPrefix = (category) => {
     default:
       return 'GEN';
   }
+};
+
+const normalizeSeverity = (severity) => {
+  const s = String(severity || '').toUpperCase();
+  if (s === 'CRITICAL') return 'Critical';
+  if (s === 'HIGH') return 'High';
+  if (s === 'MEDIUM') return 'Medium';
+  if (s === 'LOW') return 'Low';
+  if (s === 'INFO') return 'Info';
+  return 'Medium';
 };
 
 const getSeverityDeduction = (severity) => {

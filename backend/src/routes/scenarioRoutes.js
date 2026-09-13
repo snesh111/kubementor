@@ -13,9 +13,12 @@ const router = express.Router({ mergeParams: true });
 
 router.use(authenticate);
 
+router.get('/', getScenarios);
 router.get('/scenarios', getScenarios);
+router.get('/:scenarioId', getScenarioById);
 router.get('/scenarios/:scenarioId', getScenarioById);
 router.post('/scenarios/:scenarioId/start', startScenario);
+router.post('/:scenarioId/start', startScenario);
 
 router.get('/scenario-attempts', getScenarioAttempts);
 router.get('/scenario-attempts/:attemptId', getScenarioAttemptById);

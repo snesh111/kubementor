@@ -16,7 +16,7 @@ export const Header = () => {
   return (
     <header className="h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-40">
       <div className="flex items-center gap-3">
-        <NavLink to="/projects" className="flex items-center gap-3 group">
+        <NavLink to="/learn" className="flex items-center gap-3 group">
           <div className="p-2 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg text-white shadow-md shadow-cyan-500/20 group-hover:scale-105 transition-transform">
             <Terminal className="w-5 h-5" />
           </div>
@@ -25,13 +25,24 @@ export const Header = () => {
               Kube<span className="text-cyan-400">Mentor</span>
             </span>
             <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
-              v1.0-alpha
+              Practice
             </span>
           </div>
         </NavLink>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <NavLink
+          to="/learn"
+          className={({ isActive }) =>
+            `text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+              isActive ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
+            }`
+          }
+        >
+          <Terminal className="w-3.5 h-3.5" /> Practice Labs
+        </NavLink>
+
         <NavLink
           to="/projects"
           className={({ isActive }) =>
@@ -40,7 +51,7 @@ export const Header = () => {
             }`
           }
         >
-          <FolderKanban className="w-3.5 h-3.5" /> Projects
+          <FolderKanban className="w-3.5 h-3.5" /> Custom Workspaces
         </NavLink>
 
         <div className="h-6 w-px bg-slate-800"></div>

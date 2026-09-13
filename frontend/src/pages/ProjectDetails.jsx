@@ -49,6 +49,7 @@ import {
   AlertOctagon,
   ArrowRight,
   Award,
+  BookOpen,
 } from 'lucide-react';
 
 import useProjects from '../hooks/useProjects';
@@ -60,6 +61,7 @@ import useContextCollector from '../hooks/useContextCollector';
 import useAIMentor from '../hooks/useAIMentor';
 import useValidation from '../hooks/useValidation';
 
+import ScenarioLearningGuide from '../components/scenarios/ScenarioLearningGuide';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
@@ -185,8 +187,9 @@ export const ProjectDetails = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteFileOpen, setIsDeleteFileOpen] = useState(false);
 
-  // Sandbox Inspection Modal State
+  // Sandbox Inspection & Concept Modal State
   const [isSandboxModalOpen, setIsSandboxModalOpen] = useState(false);
+  const [selectedConceptScenario, setSelectedConceptScenario] = useState(null);
 
   // Selection States
   const [selectedFileItem, setSelectedFileItem] = useState(null);
@@ -1487,14 +1490,17 @@ export const ProjectDetails = () => {
           </div>
         )}
 
-        {/* Active Scenario Banner */}
+        {/* Active Scenario Dual-Pane Workbench */}
         {activeAttempt && activeAttempt.status !== 'cancelled' && (
-          <Card className="glass-card border-amber-500/40 bg-amber-500/5 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-500/20 pb-4">
+          <Card className="glass-card border-indigo-500/40 bg-slate-950/80 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-indigo-500/20 pb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-mono font-bold animate-pulse">
                     🔥 SCENARIO ACTIVE
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-mono font-bold">
+                    🎓 INTERACTIVE LAB
                   </span>
                   <h3 className="text-base font-bold text-slate-100">{activeAttempt.scenarioName}</h3>
                 </div>
@@ -1511,7 +1517,7 @@ export const ProjectDetails = () => {
                   onClick={handleRunValidation}
                   isLoading={validating}
                   disabled={validating}
-                  className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500"
+                  className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 font-bold"
                 >
                   <CheckSquare className="w-3.5 h-3.5" /> Redeploy & Validate Fix
                 </Button>
@@ -1527,313 +1533,336 @@ export const ProjectDetails = () => {
               </div>
             </div>
 
-            {/* VALIDATION PROGRESS ANIMATION */}
-            {validating && (
-              <Card className="text-center py-6 space-y-3 border-emerald-500/30 bg-slate-950/90">
-                <div className="w-8 h-8 border-3 border-slate-700 border-t-emerald-400 rounded-full animate-spin mx-auto"></div>
-                <div>
-                  <p className="text-xs font-bold text-slate-100">{validationSteps[valStepIndex]}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Evaluating real Kubernetes runtime state against scenario validation rules...</p>
+            {/* DUAL PANE LAYOUT: Left = Learning Guide & Playbook, Right = Telemetry, AI Mentor & Validation */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Pane: Educational Learning Guide */}
+              <div className="lg:col-span-6 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-mono text-indigo-300 uppercase tracking-wider bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-800/50">
+                  <BookOpen className="w-4 h-4 text-indigo-400" />
+                  <span className="font-bold">Failure Concept Anatomy & Troubleshooting Playbook</span>
                 </div>
-              </Card>
-            )}
+                <ScenarioLearningGuide
+                  scenario={
+                    scenarios.find((s) => s.scenarioId === activeAttempt.scenarioId) || activeAttempt
+                  }
+                />
+              </div>
 
-            {/* SOLUTION VALIDATION RESULT PANEL */}
-            {validationResult && !validating && (
-              <div className="p-5 bg-slate-950 border border-emerald-500/30 rounded-2xl space-y-4 animate-in fade-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                      <CheckSquare className="w-5 h-5" />
-                    </div>
+              {/* Right Pane: Live Telemetry, AI Mentor & Solution Validator */}
+              <div className="lg:col-span-6 space-y-5">
+                <div className="flex items-center gap-2 text-xs font-mono text-cyan-300 uppercase tracking-wider bg-cyan-950/40 p-2.5 rounded-xl border border-cyan-800/50">
+                  <Activity className="w-4 h-4 text-cyan-400" />
+                  <span className="font-bold">Live Cluster Telemetry & AI Diagnostic Workbench</span>
+                </div>
+
+                {/* VALIDATION PROGRESS ANIMATION */}
+                {validating && (
+                  <Card className="text-center py-6 space-y-3 border-emerald-500/30 bg-slate-950/90">
+                    <div className="w-8 h-8 border-3 border-slate-700 border-t-emerald-400 rounded-full animate-spin mx-auto"></div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-100">Solution Validation Result</h3>
-                      <p className="text-xs text-slate-400 font-mono">
-                        Validated at {formatDate(validationResult.validatedAt)} (Attempt #{validationResult.attemptNumber || 1})
-                      </p>
+                      <p className="text-xs font-bold text-slate-100">{validationSteps[valStepIndex]}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Evaluating real Kubernetes runtime state against scenario validation rules...</p>
                     </div>
-                  </div>
+                  </Card>
+                )}
 
-                  <div>{getValidationBadge(validationResult.status)}</div>
-                </div>
-
-                <p className="text-xs text-slate-200 leading-relaxed font-sans">{validationResult.summary}</p>
-
-                {/* Validation Checks */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Executed Validation Checks</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {(validationResult.checks || []).map((chk, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between font-mono text-xs"
-                      >
-                        <div className="space-y-0.5">
-                          <p className="font-bold text-slate-200">{chk.name}</p>
-                          <p className="text-[10px] text-slate-500">
-                            Expected: {String(chk.expected)} | Actual: {String(chk.actual)}
+                {/* SOLUTION VALIDATION RESULT PANEL */}
+                {validationResult && !validating && (
+                  <div className="p-5 bg-slate-950 border border-emerald-500/30 rounded-2xl space-y-4 animate-in fade-in shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                          <CheckSquare className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-slate-100">Solution Validation Result</h3>
+                          <p className="text-xs text-slate-400 font-mono">
+                            Validated at {formatDate(validationResult.validatedAt)} (Attempt #{validationResult.attemptNumber || 1})
                           </p>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            chk.status === 'PASS'
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                          }`}
-                        >
-                          {chk.status}
-                        </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* BEFORE vs AFTER Telemetry Comparison */}
-                {comp && (
-                  <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
-                    <h4 className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Activity className="w-3.5 h-3.5" /> BEFORE vs AFTER Telemetry State Comparison
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px]">
-                      <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                        <span className="text-[10px] text-slate-500 uppercase block">Status</span>
-                        <span className="text-rose-400 line-through">{comp.observedStatus?.before}</span>
-                        <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
-                        <span className="text-emerald-400 font-bold">{comp.observedStatus?.after}</span>
-                      </div>
-                      <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                        <span className="text-[10px] text-slate-500 uppercase block">Pod Readiness</span>
-                        <span className="text-rose-400 line-through">{comp.podReady?.before ? 'Ready' : 'Unready'}</span>
-                        <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
-                        <span className="text-emerald-400 font-bold">{comp.podReady?.after ? 'Ready' : 'Unready'}</span>
-                      </div>
-                      <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                        <span className="text-[10px] text-slate-500 uppercase block">Exit Code</span>
-                        <span className="text-rose-400 line-through">Code: {comp.exitCode?.before}</span>
-                        <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
-                        <span className="text-emerald-400 font-bold">Code: {comp.exitCode?.after}</span>
-                      </div>
-                      <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                        <span className="text-[10px] text-slate-500 uppercase block">Service Endpoints</span>
-                        <span className="text-slate-400">{comp.endpointCount?.before}</span>
-                        <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
-                        <span className="text-cyan-400 font-bold">{comp.endpointCount?.after}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* SYSTEM DIAGNOSIS CONTEXT TELEMETRY PANEL */}
-            <div className="p-4 bg-slate-950/90 rounded-xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <FileSearch className="w-4 h-4 text-cyan-400" /> System Diagnosis Context (v1.0 Telemetry)
-                </h4>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleRefreshContext}
-                  isLoading={contextRefreshing}
-                  className="text-xs font-mono"
-                >
-                  <RefreshCw className="w-3 h-3" /> Refresh Diagnosis Context
-                </Button>
-              </div>
-
-              {contextLoading ? (
-                <LoadingSpinner label="Collecting Kubernetes runtime telemetry..." size="sm" />
-              ) : summary ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
-                  <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Observed Status</span>
-                    <span className="font-bold text-rose-400 text-sm">🔴 {summary.observedStatus}</span>
-                  </div>
-                  <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Container Restarts</span>
-                    <span className="font-bold text-amber-300 text-sm">{summary.restartCount} restarts</span>
-                  </div>
-                  <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Exit Code / Reason</span>
-                    <span className="font-bold text-yellow-300 text-sm">
-                      Code: {summary.exitCode} ({summary.waitingReason})
-                    </span>
-                  </div>
-                  <div className="md:col-span-3 p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block mb-1">Recent Kubernetes Event</span>
-                    <span className="text-cyan-300 text-xs">{summary.recentEvent}</span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-400">Context telemetry being collected automatically...</p>
-              )}
-            </div>
-
-            {/* CONTEXT-AWARE AI MENTOR PANEL */}
-            <div className="p-5 bg-slate-950 border border-cyan-500/30 rounded-2xl space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-                    <Bot className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100">KubeMentor AI Mentor</h3>
-                    <p className="text-xs text-slate-400">Context-Grounded DevOps Troubleshooting Assistant</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-slate-400">Confidence:</span>
-                  <span
-                    className={`px-3 py-0.5 rounded-full text-xs font-mono font-bold uppercase border ${
-                      diagnosis?.diagnosis?.confidence === 'high'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                    }`}
-                  >
-                    {diagnosis?.diagnosis?.confidence || 'High'}
-                  </span>
-                </div>
-              </div>
-
-              {aiLoading ? (
-                <LoadingSpinner label="AI Mentor reasoning over ContextSnapshot..." size="md" />
-              ) : diagnosis ? (
-                <div className="space-y-4">
-                  {/* AI Grounded Diagnosis */}
-                  <div className="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-2">
-                    <h4 className="text-xs font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
-                      <HelpCircle className="w-4 h-4" /> AI Grounded Diagnosis & Validation Explanation
-                    </h4>
-                    <p className="text-sm text-slate-200 leading-relaxed font-sans">
-                      {diagnosis.diagnosis?.summary || diagnosis.likelyCause}
-                    </p>
-                  </div>
-
-                  {/* Cited Evidence */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
-                      <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Cited Telemetry Evidence
-                      </h4>
-                      <ul className="space-y-1.5 text-xs font-mono text-slate-300">
-                        {(diagnosis.evidence || []).map((ev, i) => (
-                          <li key={i} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                            {ev}
-                          </li>
-                        ))}
-                      </ul>
+                      <div>{getValidationBadge(validationResult.status)}</div>
                     </div>
 
-                    {/* Next Steps */}
-                    <div className="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
-                      <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                        <ChevronRight className="w-4 h-4 text-cyan-400" /> Suggested Next Steps
-                      </h4>
-                      <ul className="space-y-1.5 text-xs text-slate-300 font-sans">
-                        {(diagnosis.nextSteps || []).map((step, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-cyan-400 font-bold">•</span>
-                            {step}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
+                    <p className="text-xs text-slate-200 leading-relaxed font-sans">{validationResult.summary}</p>
 
-                  {/* Progressive Hint System */}
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                        <Lightbulb className="w-4 h-4 text-amber-400" /> Progressive Hint System
-                      </h4>
-                      <span className="text-[11px] font-mono text-slate-400">
-                        Current Level: {activeHintLevel} of 4
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      {[
-                        { lvl: 1, label: 'L1: Direction' },
-                        { lvl: 2, label: 'L2: Evidence' },
-                        { lvl: 3, label: 'L3: Root Cause' },
-                        { lvl: 4, label: 'L4: Suggested Fix' },
-                      ].map((item) => (
-                        <button
-                          key={item.lvl}
-                          onClick={() => handleRequestHintLevel(item.lvl)}
-                          disabled={hintLoading}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                            activeHintLevel === item.lvl
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
-                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {activeHint && (
-                      <div className="p-3 bg-slate-950 rounded-lg border border-amber-500/30 text-xs text-amber-200 leading-relaxed font-sans mt-2 animate-in fade-in">
-                        <strong className="font-mono text-amber-400">Level {activeHintLevel} Hint: </strong>
-                        {activeHint}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Interactive Conversation Timeline */}
-                  <div className="space-y-3 pt-2">
-                    <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                      <MessageSquare className="w-4 h-4 text-purple-400" /> Ask AI Mentor
-                    </h4>
-
-                    {messages.length > 0 && (
-                      <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-3 max-h-60 overflow-y-auto font-sans text-xs">
-                        {messages.map((msg, idx) => (
+                    {/* Validation Checks */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Executed Validation Checks</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {(validationResult.checks || []).map((chk, idx) => (
                           <div
                             key={idx}
-                            className={`p-3 rounded-xl max-w-[85%] ${
-                              msg.role === 'user'
-                                ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 ml-auto'
-                                : 'bg-slate-900 border border-slate-800 text-slate-200'
-                            }`}
+                            className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between font-mono text-xs"
                           >
-                            <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase font-bold">
-                              {msg.role === 'user' ? 'You' : 'AI Mentor'}
-                            </p>
-                            <p className="leading-relaxed">{msg.content}</p>
+                            <div className="space-y-0.5">
+                              <p className="font-bold text-slate-200">{chk.name}</p>
+                              <p className="text-[10px] text-slate-500">
+                                Expected: {String(chk.expected)} | Actual: {String(chk.actual)}
+                              </p>
+                            </div>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                chk.status === 'PASS'
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                              }`}
+                            >
+                              {chk.status}
+                            </span>
                           </div>
                         ))}
                       </div>
-                    )}
+                    </div>
 
-                    <form onSubmit={handleSendChatMessage} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={chatInputText}
-                        onChange={(e) => setChatInputText(e.target.value)}
-                        placeholder="Ask a question about this scenario (e.g. Why is the exit code 1?)..."
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-sans"
-                      />
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        size="sm"
-                        disabled={chatLoading || !chatInputText}
-                        isLoading={chatLoading}
-                        className="shrink-0"
-                      >
-                        <Send className="w-3.5 h-3.5" /> Send
-                      </Button>
-                    </form>
+                    {/* BEFORE vs AFTER Telemetry Comparison */}
+                    {comp && (
+                      <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
+                        <h4 className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Activity className="w-3.5 h-3.5" /> BEFORE vs AFTER Telemetry State Comparison
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                            <span className="text-[10px] text-slate-500 uppercase block">Status</span>
+                            <span className="text-rose-400 line-through">{comp.observedStatus?.before}</span>
+                            <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
+                            <span className="text-emerald-400 font-bold">{comp.observedStatus?.after}</span>
+                          </div>
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                            <span className="text-[10px] text-slate-500 uppercase block">Pod Readiness</span>
+                            <span className="text-rose-400 line-through">{comp.podReady?.before ? 'Ready' : 'Unready'}</span>
+                            <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
+                            <span className="text-emerald-400 font-bold">{comp.podReady?.after ? 'Ready' : 'Unready'}</span>
+                          </div>
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                            <span className="text-[10px] text-slate-500 uppercase block">Exit Code</span>
+                            <span className="text-rose-400 line-through">Code: {comp.exitCode?.before}</span>
+                            <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
+                            <span className="text-emerald-400 font-bold">Code: {comp.exitCode?.after}</span>
+                          </div>
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                            <span className="text-[10px] text-slate-500 uppercase block">Service Endpoints</span>
+                            <span className="text-slate-400">{comp.endpointCount?.before}</span>
+                            <ArrowRight className="w-3 h-3 inline mx-1 text-slate-600" />
+                            <span className="text-cyan-400 font-bold">{comp.endpointCount?.after}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* SYSTEM DIAGNOSIS CONTEXT TELEMETRY PANEL */}
+                <div className="p-4 bg-slate-950/90 rounded-xl border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <FileSearch className="w-4 h-4 text-cyan-400" /> System Diagnosis Context (v1.0 Telemetry)
+                    </h4>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleRefreshContext}
+                      isLoading={contextRefreshing}
+                      className="text-xs font-mono"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Refresh Context
+                    </Button>
+                  </div>
+
+                  {contextLoading ? (
+                    <LoadingSpinner label="Collecting Kubernetes runtime telemetry..." size="sm" />
+                  ) : summary ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+                      <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase block">Observed Status</span>
+                        <span className="font-bold text-rose-400 text-sm">🔴 {summary.observedStatus}</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase block">Container Restarts</span>
+                        <span className="font-bold text-amber-300 text-sm">{summary.restartCount} restarts</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase block">Exit Code / Reason</span>
+                        <span className="font-bold text-yellow-300 text-sm">
+                          Code: {summary.exitCode} ({summary.waitingReason})
+                        </span>
+                      </div>
+                      <div className="md:col-span-3 p-2.5 bg-slate-900 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase block mb-1">Recent Kubernetes Event</span>
+                        <span className="text-cyan-300 text-xs">{summary.recentEvent}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">Context telemetry being collected automatically...</p>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs text-slate-400">Initializing AI Mentor analysis...</p>
-              )}
+
+                {/* CONTEXT-AWARE AI MENTOR PANEL */}
+                <div className="p-5 bg-slate-950 border border-cyan-500/30 rounded-2xl space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                        <Bot className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-slate-100">KubeMentor AI Mentor</h3>
+                        <p className="text-xs text-slate-400">Context-Grounded DevOps Troubleshooting Assistant</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-slate-400">Confidence:</span>
+                      <span
+                        className={`px-3 py-0.5 rounded-full text-xs font-mono font-bold uppercase border ${
+                          diagnosis?.diagnosis?.confidence === 'high'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        }`}
+                      >
+                        {diagnosis?.diagnosis?.confidence || 'High'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {aiLoading ? (
+                    <LoadingSpinner label="AI Mentor reasoning over ContextSnapshot..." size="md" />
+                  ) : diagnosis ? (
+                    <div className="space-y-4">
+                      {/* AI Grounded Diagnosis */}
+                      <div className="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-2">
+                        <h4 className="text-xs font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
+                          <HelpCircle className="w-4 h-4" /> AI Grounded Diagnosis & Validation Explanation
+                        </h4>
+                        <p className="text-sm text-slate-200 leading-relaxed font-sans">
+                          {diagnosis.diagnosis?.summary || diagnosis.likelyCause}
+                        </p>
+                      </div>
+
+                      {/* Cited Evidence & Next Steps */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
+                          <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Cited Telemetry Evidence
+                          </h4>
+                          <ul className="space-y-1.5 text-xs font-mono text-slate-300">
+                            {(diagnosis.evidence || []).map((ev, i) => (
+                              <li key={i} className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                                {ev}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
+                          <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <ChevronRight className="w-4 h-4 text-cyan-400" /> Suggested Next Steps
+                          </h4>
+                          <ul className="space-y-1.5 text-xs text-slate-300 font-sans">
+                            {(diagnosis.nextSteps || []).map((step, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-cyan-400 font-bold">•</span>
+                                {step}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Progressive Hint System */}
+                      <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                            <Lightbulb className="w-4 h-4 text-amber-400" /> Progressive Hint System
+                          </h4>
+                          <span className="text-[11px] font-mono text-slate-400">
+                            Current Level: {activeHintLevel} of 4
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {[
+                            { lvl: 1, label: 'L1: Direction' },
+                            { lvl: 2, label: 'L2: Evidence' },
+                            { lvl: 3, label: 'L3: Root Cause' },
+                            { lvl: 4, label: 'L4: Suggested Fix' },
+                          ].map((item) => (
+                            <button
+                              key={item.lvl}
+                              onClick={() => handleRequestHintLevel(item.lvl)}
+                              disabled={hintLoading}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                                activeHintLevel === item.lvl
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
+                                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {activeHint && (
+                          <div className="p-3 bg-slate-950 rounded-lg border border-amber-500/30 text-xs text-amber-200 leading-relaxed font-sans mt-2 animate-in fade-in">
+                            <strong className="font-mono text-amber-400">Level {activeHintLevel} Hint: </strong>
+                            {activeHint}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Interactive Conversation Timeline */}
+                      <div className="space-y-3 pt-2">
+                        <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                          <MessageSquare className="w-4 h-4 text-purple-400" /> Ask AI Mentor
+                        </h4>
+
+                        {messages.length > 0 && (
+                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-3 max-h-60 overflow-y-auto font-sans text-xs">
+                            {messages.map((msg, idx) => (
+                              <div
+                                key={idx}
+                                className={`p-3 rounded-xl max-w-[85%] ${
+                                  msg.role === 'user'
+                                    ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 ml-auto'
+                                    : 'bg-slate-900 border border-slate-800 text-slate-200'
+                                }`}
+                              >
+                                <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase font-bold">
+                                  {msg.role === 'user' ? 'You' : 'AI Mentor'}
+                                </p>
+                                <p className="leading-relaxed">{msg.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <form onSubmit={handleSendChatMessage} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={chatInputText}
+                            onChange={(e) => setChatInputText(e.target.value)}
+                            placeholder="Ask a question about this scenario (e.g. Why is the exit code 1?)..."
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-sans"
+                          />
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            size="sm"
+                            disabled={chatLoading || !chatInputText}
+                            isLoading={chatLoading}
+                            className="shrink-0"
+                          >
+                            <Send className="w-3.5 h-3.5" /> Send
+                          </Button>
+                        </form>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">Initializing AI Mentor analysis...</p>
+                  )}
+                </div>
+              </div>
             </div>
           </Card>
         )}
@@ -1883,16 +1912,24 @@ export const ProjectDetails = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-800">
+                <div className="pt-4 mt-4 border-t border-slate-800 flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => setSelectedConceptScenario(sc)}
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> Learn Concept
+                  </Button>
                   <Button
                     variant="primary"
                     size="sm"
-                    className="w-full"
+                    className="flex-1 text-xs"
                     onClick={() => handleStartScenario(sc.scenarioId)}
                     disabled={scenarioActionLoading || (activeAttempt && activeAttempt.status !== 'cancelled')}
                     isLoading={scenarioActionLoading && activeAttempt?.scenarioId === sc.scenarioId}
                   >
-                    <Play className="w-3.5 h-3.5 fill-current" /> Start Scenario
+                    <Play className="w-3.5 h-3.5 fill-current" /> Start
                   </Button>
                 </div>
               </Card>
@@ -2289,6 +2326,24 @@ export const ProjectDetails = () => {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* FAILURE CONCEPT MASTERCLASS & PLAYBOOK MODAL */}
+      <Modal
+        isOpen={!!selectedConceptScenario}
+        onClose={() => setSelectedConceptScenario(null)}
+        title={selectedConceptScenario ? `Failure Concept Masterclass: ${selectedConceptScenario.name}` : 'Concept Masterclass'}
+      >
+        {selectedConceptScenario && (
+          <div className="max-h-[75vh] overflow-y-auto pr-1 space-y-4">
+            <ScenarioLearningGuide scenario={selectedConceptScenario} />
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <Button variant="secondary" onClick={() => setSelectedConceptScenario(null)}>
+                Close Masterclass
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

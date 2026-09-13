@@ -1,6 +1,233 @@
 import k8sClientWrapper from './k8sClient.js';
+import DeploymentRecord from '../models/DeploymentRecord.js';
+import ScenarioAttempt from '../models/ScenarioAttempt.js';
 
 export const statusService = {
+  /**
+   * Deterministic simulated sandbox status reflecting active scenarios or applied fixes
+   */
+  getSimulatedSandboxStatus: async (namespace) => {
+    let activeAttempt = null;
+    let deploymentRecord = null;
+
+    try {
+      deploymentRecord = await DeploymentRecord.findOne({ namespace }).sort({ createdAt: -1 });
+      if (deploymentRecord) {
+        activeAttempt = await ScenarioAttempt.findOne({
+          deployment: deploymentRecord._id,
+          status: { $in: ['active', 'injecting'] },
+          'restorationDetails.fixApplied': { $ne: true },
+        }).sort({ createdAt: -1 });
+      }
+    } catch (err) {
+      // Model lookups failed or DB not connected
+    }
+
+    if (activeAttempt) {
+      const scId = activeAttempt.scenarioId;
+      if (scId === 'crash-loop-backoff') {
+        return {
+          namespace,
+          namespaceStatus: 'Active',
+          overallStatus: 'failed',
+          deploymentsCount: 1,
+          servicesCount: 1,
+          podsCount: 1,
+          deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 0, status: 'Progressing' }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          pods: [
+            {
+              name: `${namespace}-pod-crash`,
+              phase: 'Running',
+              ready: false,
+              restarts: 4,
+              containers: [{ name: 'nginx', state: 'waiting', ready: false, reason: 'CrashLoopBackOff', exitCode: 1 }],
+              creationTimestamp: new Date(Date.now() - 120000).toISOString(),
+            },
+          ],
+          events: [
+            { type: 'Warning', reason: 'BackOff', message: 'Back-off restarting failed container', timestamp: new Date().toISOString() },
+          ],
+        };
+      }
+
+      if (scId === 'image-pull-backoff') {
+        return {
+          namespace,
+          namespaceStatus: 'Active',
+          overallStatus: 'failed',
+          deploymentsCount: 1,
+          servicesCount: 1,
+          podsCount: 1,
+          deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 0, status: 'Progressing' }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          pods: [
+            {
+              name: `${namespace}-pod-pull`,
+              phase: 'Pending',
+              ready: false,
+              restarts: 0,
+              containers: [{ name: 'nginx', state: 'waiting', ready: false, reason: 'ImagePullBackOff' }],
+              creationTimestamp: new Date(Date.now() - 60000).toISOString(),
+            },
+          ],
+          events: [
+            { type: 'Warning', reason: 'Failed', message: 'Failed to pull image "nonexistent-image": rpc error', timestamp: new Date().toISOString() },
+          ],
+        };
+      }
+
+      if (scId === 'oom-killed') {
+        return {
+          namespace,
+          namespaceStatus: 'Active',
+          overallStatus: 'failed',
+          deploymentsCount: 1,
+          servicesCount: 1,
+          podsCount: 1,
+          deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 0, status: 'Progressing' }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          pods: [
+            {
+              name: `${namespace}-pod-oom`,
+              phase: 'Running',
+              ready: false,
+              restarts: 3,
+              containers: [{ name: 'nginx', state: 'terminated', ready: false, reason: 'OOMKilled', exitCode: 137 }],
+              creationTimestamp: new Date(Date.now() - 90000).toISOString(),
+            },
+          ],
+          events: [
+            { type: 'Warning', reason: 'OOMKilling', message: 'Killed process inside container nginx (limit 16Mi)', timestamp: new Date().toISOString() },
+          ],
+        };
+      }
+
+      if (scId === 'missing-configmap') {
+        return {
+          namespace,
+          namespaceStatus: 'Active',
+          overallStatus: 'failed',
+          deploymentsCount: 1,
+          servicesCount: 1,
+          podsCount: 1,
+          deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 0, status: 'Progressing' }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          pods: [
+            {
+              name: `${namespace}-pod-config`,
+              phase: 'Pending',
+              ready: false,
+              restarts: 0,
+              containers: [{ name: 'nginx', state: 'waiting', ready: false, reason: 'CreateContainerConfigError' }],
+              creationTimestamp: new Date(Date.now() - 45000).toISOString(),
+            },
+          ],
+          events: [
+            { type: 'Warning', reason: 'FailedMount', message: 'configmap "app-config" not found', timestamp: new Date().toISOString() },
+          ],
+        };
+      }
+
+      if (scId === 'service-connectivity') {
+        return {
+          namespace,
+          namespaceStatus: 'Active',
+          overallStatus: 'running',
+          deploymentsCount: 1,
+          servicesCount: 1,
+          podsCount: 1,
+          deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 1, status: 'Ready' }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', selector: { app: 'mismatched-label' }, ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          pods: [
+            {
+              name: `${namespace}-pod-svc`,
+              phase: 'Running',
+              ready: true,
+              restarts: 0,
+              containers: [{ name: 'nginx', state: 'running', ready: true }],
+              creationTimestamp: new Date(Date.now() - 120000).toISOString(),
+            },
+          ],
+          events: [
+            { type: 'Warning', reason: 'Unhealthy', message: 'Endpoints empty for service "web-service"', timestamp: new Date().toISOString() },
+          ],
+        };
+      }
+
+      if (scId === 'ingress-tls-failure') {
+        return {
+          namespace,
+          namespaceStatus: 'Active',
+          overallStatus: 'running',
+          deploymentsCount: 1,
+          servicesCount: 1,
+          podsCount: 1,
+          deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 1, status: 'Ready' }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          ingresses: [{ name: 'web-ingress', tls: [{ secretName: 'nonexistent-tls-secret-failure' }] }],
+          pods: [
+            {
+              name: `${namespace}-pod-tls`,
+              phase: 'Running',
+              ready: true,
+              restarts: 0,
+              containers: [{ name: 'nginx', state: 'running', ready: true }],
+              creationTimestamp: new Date(Date.now() - 120000).toISOString(),
+            },
+          ],
+          events: [
+            { type: 'Warning', reason: 'SyncError', message: 'Secret "nonexistent-tls-secret-failure" not found', timestamp: new Date().toISOString() },
+          ],
+        };
+      }
+    }
+
+    // Default healthy running status for simulation
+    return {
+      namespace,
+      namespaceStatus: 'Active',
+      overallStatus: 'running',
+      deploymentsCount: 1,
+      servicesCount: 1,
+      podsCount: 1,
+      deployments: [
+        {
+          name: 'web-app',
+          desiredReplicas: 1,
+          availableReplicas: 1,
+          status: 'Ready',
+        },
+      ],
+      services: [
+        {
+          name: 'web-service',
+          type: 'ClusterIP',
+          clusterIP: '10.96.14.22',
+          ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }],
+        },
+      ],
+      pods: [
+        {
+          name: `${namespace}-pod-running`,
+          phase: 'Running',
+          ready: true,
+          restarts: 0,
+          containers: [{ name: 'nginx', state: 'running', ready: true }],
+          creationTimestamp: new Date(Date.now() - 120000).toISOString(),
+        },
+      ],
+      events: [
+        {
+          type: 'Normal',
+          reason: 'Started',
+          message: 'Started container nginx',
+          timestamp: new Date(Date.now() - 105000).toISOString(),
+        },
+      ],
+    };
+  },
+
   /**
    * Fetch complete sandbox deployment status from Kubernetes cluster API
    * @param {string} namespace - Sandbox namespace
@@ -8,63 +235,7 @@ export const statusService = {
    */
   getSandboxStatus: async (namespace) => {
     if (!k8sClientWrapper.isConnected || !k8sClientWrapper.coreV1Api) {
-      // Fallback simulated sandbox status if local cluster daemon is offline
-      return {
-        namespace,
-        namespaceStatus: 'Active',
-        overallStatus: 'running',
-        deploymentsCount: 1,
-        servicesCount: 1,
-        podsCount: 2,
-        deployments: [
-          {
-            name: 'web-deployment',
-            desiredReplicas: 2,
-            availableReplicas: 2,
-            status: 'Ready',
-          },
-        ],
-        services: [
-          {
-            name: 'web-service',
-            type: 'ClusterIP',
-            clusterIP: '10.96.14.22',
-            ports: [{ port: 80, targetPort: 8080, protocol: 'TCP' }],
-          },
-        ],
-        pods: [
-          {
-            name: `${namespace}-pod-7d8f9`,
-            phase: 'Running',
-            ready: true,
-            restarts: 0,
-            containers: [{ name: 'nginx', state: 'running', ready: true }],
-            creationTimestamp: new Date(Date.now() - 120000).toISOString(),
-          },
-          {
-            name: `${namespace}-pod-9f82a`,
-            phase: 'Running',
-            ready: true,
-            restarts: 0,
-            containers: [{ name: 'nginx', state: 'running', ready: true }],
-            creationTimestamp: new Date(Date.now() - 120000).toISOString(),
-          },
-        ],
-        events: [
-          {
-            type: 'Normal',
-            reason: 'Created',
-            message: 'Created container nginx',
-            timestamp: new Date(Date.now() - 110000).toISOString(),
-          },
-          {
-            type: 'Normal',
-            reason: 'Started',
-            message: 'Started container nginx',
-            timestamp: new Date(Date.now() - 105000).toISOString(),
-          },
-        ],
-      };
+      return await statusService.getSimulatedSandboxStatus(namespace);
     }
 
     try {

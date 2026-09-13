@@ -30,7 +30,8 @@ export const contextService = {
       throw new ApiError('Scenario attempt not found or not accessible', 404);
     }
 
-    const deploymentRecord = attempt.deployment;
+    const deploymentId = attempt.deployment?._id || attempt.deployment;
+    const deploymentRecord = await DeploymentRecord.findById(deploymentId);
     if (!deploymentRecord) {
       throw new ApiError('Associated deployment record not found', 404);
     }
