@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Terminal,
@@ -17,19 +17,129 @@ import {
   ArrowRight,
   AlertCircle,
   HelpCircle,
+  Flame,
+  Bomb,
+  WifiOff,
+  Lock,
+  StopCircle,
+  FileText,
+  Compass,
+  Quote,
+  Zap,
+  Code2,
+  Check,
+  ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 
 import labService from '../services/labService';
+import progressService from '../services/progressService';
 import PracticeCategory from '../components/learn/PracticeCategory';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const FALLBACK_CATALOG = [
+// 1. LIVE FLAGSHIP TROUBLESHOOTING SCENARIOS
+const LIVE_TROUBLESHOOTING_CATEGORY = {
+  categoryId: 'troubleshooting',
+  categoryName: 'Troubleshooting Labs',
+  description: 'Real-world cluster outage simulations. Diagnose live pod failures, analyze telemetry, and redeploy working configurations.',
+  isLiveTrack: true,
+  items: [
+    {
+      id: 'crash-loop-backoff',
+      slug: 'crash-loop-backoff',
+      scenarioId: 'crash-loop-backoff',
+      name: 'CrashLoopBackOff with Exit Code 1',
+      description: 'Web microservice container crashes immediately on boot due to missing mandatory configuration variables.',
+      difficulty: 'Beginner',
+      estTime: '15 mins',
+      expectedFailure: 'CrashLoopBackOff (exit code 1)',
+      status: 'Available',
+      isLive: true,
+      category: 'Troubleshooting',
+      iconName: 'Bomb',
+    },
+    {
+      id: 'image-pull-backoff',
+      slug: 'image-pull-backoff',
+      scenarioId: 'image-pull-backoff',
+      name: 'ImagePullBackOff Tag Mismatch',
+      description: 'Pod fails to download container image from registry due to a non-existent tag.',
+      difficulty: 'Beginner',
+      estTime: '10 mins',
+      expectedFailure: 'ImagePullBackOff',
+      status: 'Available',
+      isLive: true,
+      category: 'Troubleshooting',
+      iconName: 'StopCircle',
+    },
+    {
+      id: 'oom-killed',
+      slug: 'oom-killed',
+      scenarioId: 'oom-killed',
+      name: 'Out of Memory (OOMKilled) Exit 137',
+      description: 'Container exceeds cgroup memory limits, causing Linux kernel OOM Killer to terminate process.',
+      difficulty: 'Intermediate',
+      estTime: '15 mins',
+      expectedFailure: 'OOMKilled (exit code 137)',
+      status: 'Available',
+      isLive: true,
+      category: 'Troubleshooting',
+      iconName: 'Flame',
+    },
+    {
+      id: 'missing-configmap',
+      slug: 'missing-configmap',
+      scenarioId: 'missing-configmap',
+      name: 'Missing ConfigMap / Secret Ref',
+      description: 'Pod specification references non-existent ConfigMap, causing CreateContainerConfigError.',
+      difficulty: 'Beginner',
+      estTime: '10 mins',
+      expectedFailure: 'CreateContainerConfigError',
+      status: 'Available',
+      isLive: true,
+      category: 'Troubleshooting',
+      iconName: 'FileText',
+    },
+    {
+      id: 'service-connectivity',
+      slug: 'service-connectivity',
+      scenarioId: 'service-connectivity',
+      name: 'Service Selector Label Mismatch',
+      description: 'Service selector labels do not match pod metadata labels, dropping all incoming network traffic.',
+      difficulty: 'Intermediate',
+      estTime: '15 mins',
+      expectedFailure: 'Empty Endpoints (502/503)',
+      status: 'Available',
+      isLive: true,
+      category: 'Troubleshooting',
+      iconName: 'WifiOff',
+    },
+    {
+      id: 'ingress-tls-failure',
+      slug: 'ingress-tls-failure',
+      scenarioId: 'ingress-tls-failure',
+      name: 'Ingress TLS Secret Missing',
+      description: 'Ingress references missing TLS Secret, causing browser SSL handshake failures.',
+      difficulty: 'Advanced',
+      estTime: '20 mins',
+      expectedFailure: 'TLSSecretNotFound',
+      status: 'Available',
+      isLive: true,
+      category: 'Troubleshooting',
+      iconName: 'Lock',
+    },
+  ],
+};
+
+// 2. FUTURE SCOPE & UPCOMING PRACTICE TOPICS
+const FUTURE_SCOPE_CATEGORIES = [
   {
     categoryId: 'basics',
     categoryName: 'Kubernetes Basics',
     description: 'Master core building blocks: Pod lifecycle, declarative Deployments, and L4 Services.',
+    isLiveTrack: false,
     items: [
       {
         id: 'topic-pods',
@@ -71,8 +181,9 @@ const FALLBACK_CATALOG = [
   },
   {
     categoryId: 'configuration',
-    categoryName: 'Configuration',
+    categoryName: 'Configuration & Secrets',
     description: 'Decouple runtime parameters and sensitive keys from container images.',
+    isLiveTrack: false,
     items: [
       {
         id: 'topic-configmaps',
@@ -100,102 +211,19 @@ const FALLBACK_CATALOG = [
       },
     ],
   },
-  {
-    categoryId: 'troubleshooting',
-    categoryName: 'Troubleshooting',
-    description: 'Real-world failure simulations. Diagnose live outages, investigate evidence, and fix configurations.',
-    items: [
-      {
-        id: 'crash-loop-backoff',
-        slug: 'crash-loop-backoff',
-        scenarioId: 'crash-loop-backoff',
-        name: 'CrashLoopBackOff with Exit Code 1',
-        description: 'Web microservice container crashes immediately on boot due to missing mandatory configuration variables.',
-        difficulty: 'Beginner',
-        estTime: '15 mins',
-        expectedFailure: 'CrashLoopBackOff (exit code 1)',
-        status: 'Available',
-        isLive: true,
-        category: 'Troubleshooting',
-        iconName: 'Bomb',
-      },
-      {
-        id: 'image-pull-backoff',
-        slug: 'image-pull-backoff',
-        scenarioId: 'image-pull-backoff',
-        name: 'ImagePullBackOff Tag Mismatch',
-        description: 'Pod fails to download container image from registry due to a non-existent tag.',
-        difficulty: 'Beginner',
-        estTime: '10 mins',
-        expectedFailure: 'ImagePullBackOff',
-        status: 'Available',
-        isLive: true,
-        category: 'Troubleshooting',
-        iconName: 'StopCircle',
-      },
-      {
-        id: 'oom-killed',
-        slug: 'oom-killed',
-        scenarioId: 'oom-killed',
-        name: 'Out of Memory (OOMKilled) Exit 137',
-        description: 'Container exceeds cgroup memory limits, causing Linux kernel OOM Killer to terminate process.',
-        difficulty: 'Intermediate',
-        estTime: '15 mins',
-        expectedFailure: 'OOMKilled (exit code 137)',
-        status: 'Available',
-        isLive: true,
-        category: 'Troubleshooting',
-        iconName: 'Flame',
-      },
-      {
-        id: 'missing-configmap',
-        slug: 'missing-configmap',
-        scenarioId: 'missing-configmap',
-        name: 'Missing ConfigMap / Secret Ref',
-        description: 'Pod specification references non-existent ConfigMap, causing CreateContainerConfigError.',
-        difficulty: 'Beginner',
-        estTime: '10 mins',
-        expectedFailure: 'CreateContainerConfigError',
-        status: 'Available',
-        isLive: true,
-        category: 'Troubleshooting',
-        iconName: 'FileText',
-      },
-      {
-        id: 'service-connectivity',
-        slug: 'service-connectivity',
-        scenarioId: 'service-connectivity',
-        name: 'Service Selector Label Mismatch',
-        description: 'Service selector labels do not match pod metadata labels, dropping all incoming network traffic.',
-        difficulty: 'Intermediate',
-        estTime: '15 mins',
-        expectedFailure: 'Empty Endpoints (502/503)',
-        status: 'Available',
-        isLive: true,
-        category: 'Troubleshooting',
-        iconName: 'WifiOff',
-      },
-      {
-        id: 'ingress-tls-failure',
-        slug: 'ingress-tls-failure',
-        scenarioId: 'ingress-tls-failure',
-        name: 'Ingress TLS Secret Missing',
-        description: 'Ingress references missing TLS Secret, causing browser SSL handshake failures.',
-        difficulty: 'Advanced',
-        estTime: '20 mins',
-        expectedFailure: 'TLSSecretNotFound',
-        status: 'Available',
-        isLive: true,
-        category: 'Troubleshooting',
-        iconName: 'Lock',
-      },
-    ],
-  },
+];
+
+const FULL_ORDERED_CATALOG = [
+  LIVE_TROUBLESHOOTING_CATEGORY,
+  ...FUTURE_SCOPE_CATEGORIES,
 ];
 
 export const LearnCatalog = () => {
   const navigate = useNavigate();
-  const [catalog, setCatalog] = useState(FALLBACK_CATALOG);
+  const labsSectionRef = useRef(null);
+  const [catalog, setCatalog] = useState(FULL_ORDERED_CATALOG);
+  const [masteryMap, setMasteryMap] = useState({});
+  const [progressSummary, setProgressSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('All');
@@ -205,9 +233,26 @@ export const LearnCatalog = () => {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const res = await labService.getCatalog();
+        const [res, progSummary, scList] = await Promise.all([
+          labService.getCatalog(),
+          progressService.getUserProgress().catch(() => null),
+          progressService.getScenarioMasteryList().catch(() => []),
+        ]);
+
         if (res.data?.catalog && Array.isArray(res.data.catalog) && res.data.catalog.length > 0) {
-          setCatalog(res.data.catalog);
+          const liveCats = res.data.catalog.filter((c) => c.categoryId === 'troubleshooting');
+          const otherCats = res.data.catalog.filter((c) => c.categoryId !== 'troubleshooting');
+          setCatalog([...liveCats, ...otherCats]);
+        }
+        if (progSummary) {
+          setProgressSummary(progSummary);
+        }
+        if (Array.isArray(scList)) {
+          const map = {};
+          scList.forEach((s) => {
+            map[s.scenarioId] = s.masteryState;
+          });
+          setMasteryMap(map);
         }
       } catch (err) {
         console.warn('Using fallback catalog:', err.message);
@@ -227,13 +272,17 @@ export const LearnCatalog = () => {
     setSelectedDetailItem(item);
   };
 
+  const scrollToLabs = () => {
+    labsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   // Filter categories and items based on search and tab selections
   const filteredCatalog = catalog
     .filter((cat) => {
       if (selectedCategoryTab === 'All') return true;
+      if (selectedCategoryTab === 'Troubleshooting') return cat.categoryId === 'troubleshooting';
       if (selectedCategoryTab === 'Basics') return cat.categoryId === 'basics';
       if (selectedCategoryTab === 'Configuration') return cat.categoryId === 'configuration';
-      if (selectedCategoryTab === 'Troubleshooting') return cat.categoryId === 'troubleshooting';
       return true;
     })
     .map((cat) => {
@@ -256,50 +305,152 @@ export const LearnCatalog = () => {
     })
     .filter((cat) => cat.items.length > 0);
 
-  const totalLiveLabs = catalog.reduce(
-    (acc, cat) => acc + (cat.items || []).filter((i) => i.isLive !== false && i.status === 'Available').length,
-    0
-  );
+  const liveCategory = filteredCatalog.find((c) => c.categoryId === 'troubleshooting');
+  const futureCategories = filteredCatalog.filter((c) => c.categoryId !== 'troubleshooting');
+
+  const totalLiveLabs = LIVE_TROUBLESHOOTING_CATEGORY.items.length;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
-      {/* HERO SECTION — WHAT DO YOU WANT TO PRACTICE */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 p-8 shadow-2xl">
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-semibold">
-            <Terminal className="w-3.5 h-3.5" /> Hands-On Kubernetes Practice Labs
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight">
-            Choose what you want to practice
-          </h1>
-          <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
-            Select a Kubernetes topic or real-world troubleshooting mission. Work directly with live cluster telemetry, investigate container failures, and fix YAML configurations.
-          </p>
+    <div className="space-y-12 max-w-7xl mx-auto pb-16 font-sans">
+      {/* 1. HERO SECTION MATCHING ESCBASH.COM COSMIC DESIGN */}
+      <div className="relative pt-8 pb-12 flex flex-col items-center text-center px-4 overflow-hidden">
+        {/* Subtle background radial glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+        {/* Central Esc-Bash Style Brand Pill */}
+        <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121926] border border-slate-700/80 shadow-lg">
+          <span className="text-slate-400 font-mono text-xs font-bold">&gt;_</span>
+          <span className="text-emerald-400 font-mono text-xs font-bold tracking-tight">Kube</span>
+          <span className="text-white font-mono text-xs font-bold tracking-tight">Mentor</span>
         </div>
 
-        {/* Highlight feature pills */}
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 border-t border-slate-800/80 mt-6">
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{totalLiveLabs} Live Failure Labs</span>
+        {/* Green Monospace Tagline */}
+        <p className="text-[11px] sm:text-xs font-mono font-bold uppercase tracking-[0.25em] text-emerald-400 mb-4">
+          HANDS-ON SIMULATION + REAL KUBERNETES LABS
+        </p>
+
+        {/* Massive Bold Headline with Glowing Accent */}
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight max-w-4xl leading-[1.15] mb-6">
+          The best platform to simulate and practice{' '}
+          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            Kubernetes
+          </span>
+        </h1>
+
+        {/* Concise Description Subtitle */}
+        <p className="text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed mb-8">
+          KubeMentor spins up an isolated sandbox in seconds. Learners and engineers investigate live failure telemetry, edit YAML manifests, use interactive CLI terminals, and get instant authoritative feedback.
+        </p>
+
+        {/* Dual Hero CTA Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
+          <button
+            onClick={scrollToLabs}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2 active:scale-95"
+          >
+            <Play className="w-4 h-4 fill-current" /> Learn your first skill
+          </button>
+
+          <button
+            onClick={() => navigate('/byoa')}
+            className="px-6 py-3 rounded-xl bg-[#111722] hover:bg-[#161f2e] text-white border border-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 active:scale-95"
+          >
+            <Sparkles className="w-4 h-4 text-purple-400" /> Test Custom App (BYOA)
+          </button>
+        </div>
+
+        {/* "SEE A LAB IN ACTION" Small Green Label */}
+        <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-emerald-500/80 mb-4">
+          SEE A LAB IN ACTION
+        </span>
+
+        {/* Interactive Live Simulator Preview Card */}
+        <div className="w-full max-w-4xl rounded-2xl bg-[#0a0d14] border border-slate-800 shadow-2xl overflow-hidden text-left">
+          {/* Mock Window Bar */}
+          <div className="px-4 py-2.5 bg-[#0e131d] border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+              <span className="text-[11px] font-mono text-slate-400 ml-2">kubementor live demo</span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-mono">
+              <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
+                VALIDATE
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-            <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span>Isolated Sandboxes</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-            <Cpu className="w-4 h-4 text-purple-400 shrink-0" />
-            <span>Context AI Mentor</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>Instant Solution Check</span>
+
+          {/* 3-Column Preview Interior */}
+          <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+            {/* Left Column: Roadmap */}
+            <div className="p-3 rounded-xl bg-[#070a10] border border-slate-800/80 space-y-2">
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
+                01 | INVESTIGATION
+              </span>
+              <div className="text-xs text-slate-200 font-bold">CrashLoopBackOff</div>
+              <div className="text-[10px] text-slate-500">Inspect pod exit code 1 &amp; crash logs</div>
+              <div className="pt-2">
+                <span className="inline-block w-full py-1 text-center rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+                  ● 100% Deterministic Engine
+                </span>
+              </div>
+            </div>
+
+            {/* Middle Column: Terminal Snippet */}
+            <div className="p-3 rounded-xl bg-[#070a10] border border-slate-800/80 text-[11px] space-y-1">
+              <div className="text-slate-500">$ kubectl get pods</div>
+              <div className="text-rose-400">web-app-crash 0/1 CrashLoopBackOff (4)</div>
+              <div className="text-slate-500 mt-2">$ kubectl logs web-app-crash</div>
+              <div className="text-amber-300">[FATAL] Missing required APP_ENV variable</div>
+            </div>
+
+            {/* Right Column: Fix & AI Assistance */}
+            <div className="p-3 rounded-xl bg-[#070a10] border border-slate-800/80 text-[11px] space-y-2">
+              <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">
+                AI MENTOR HINT
+              </span>
+              <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                "The container terminates with Exit Code 1. Fix the environment spec in Monaco YAML editor and apply."
+              </p>
+              <div className="flex items-center gap-1 text-emerald-400 text-[10px] font-bold font-mono">
+                <Check className="w-3.5 h-3.5" /> Solution Verified: PASS (100%)
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* FILTER & SEARCH CONTROLS */}
-      <div className="glass-card p-4 rounded-xl border border-slate-800 space-y-4">
+      {/* 2. BRING YOUR OWN APPLICATION (BYOA) PLAYGROUND BANNER */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#0d121f] to-slate-950 border border-purple-500/30 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 bg-purple-500/10 border border-purple-500/30 rounded-2xl text-purple-400 shadow-inner">
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-white font-mono">Custom Playgrounds (BYOA)</h3>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                ADVANCED SIMULATOR
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1 max-w-xl">
+              Upload your own Kubernetes YAML manifests, run automated AST security and resource linting, inject simulated failure conditions, and test fixes in an isolated sandbox.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => navigate('/byoa')}
+          className="text-xs font-semibold whitespace-nowrap border-purple-500/40 text-purple-300 hover:bg-purple-500/10 shadow-sm py-2.5 px-4"
+        >
+          Launch BYOA Wizard <ArrowRight className="w-3.5 h-3.5 ml-1" />
+        </Button>
+      </div>
+
+      {/* 3. SEARCH & DIFFICULTY FILTER CONTROLS */}
+      <div ref={labsSectionRef} className="bg-[#0c1017] p-4 rounded-xl border border-slate-800 space-y-3.5">
         <div className="flex flex-col md:flex-row items-center gap-4">
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -307,8 +458,8 @@ export const LearnCatalog = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by topic, failure name, or keyword (e.g. CrashLoop, OOM, Service, Ingress)..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              placeholder="Search labs, topics, playgrounds (e.g. CrashLoop, OOM, Ingress, ConfigMap)..."
+              className="w-full bg-[#080b11] border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 
@@ -323,8 +474,8 @@ export const LearnCatalog = () => {
                 onClick={() => setSelectedDifficulty(diff)}
                 className={`px-3 py-1 rounded-lg text-xs font-mono transition-all border ${
                   selectedDifficulty === diff
-                    ? 'bg-cyan-600 text-white border-cyan-500 font-bold shadow-sm'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
+                    ? 'bg-emerald-600 text-slate-950 border-emerald-400 font-black shadow-sm'
+                    : 'bg-[#111722] text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
                 }`}
               >
                 {diff}
@@ -333,22 +484,22 @@ export const LearnCatalog = () => {
           </div>
         </div>
 
-        {/* Category Pills */}
+        {/* Category Filter Pills */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/60">
-          <span className="text-xs font-mono text-slate-400 mr-1">Practice Category:</span>
+          <span className="text-xs font-mono text-slate-400 mr-1">Filter Track:</span>
           {[
-            { id: 'All', label: 'All Categories' },
-            { id: 'Troubleshooting', label: 'Troubleshooting (Live Missions)' },
-            { id: 'Basics', label: 'Kubernetes Basics' },
-            { id: 'Configuration', label: 'Configuration' },
+            { id: 'All', label: 'All Topics' },
+            { id: 'Troubleshooting', label: '🔥 6 Live Troubleshooting Labs' },
+            { id: 'Basics', label: 'Kubernetes Basics (Roadmap)' },
+            { id: 'Configuration', label: 'Configuration (Roadmap)' },
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategoryTab(cat.id)}
               className={`px-3 py-1 rounded-lg text-xs font-mono transition-all border ${
                 selectedCategoryTab === cat.id
-                  ? 'bg-indigo-600 text-white border-indigo-500 font-bold shadow-sm'
-                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold shadow-sm'
+                  : 'bg-[#111722] text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
               }`}
             >
               {cat.label}
@@ -357,40 +508,83 @@ export const LearnCatalog = () => {
         </div>
       </div>
 
-      {/* PRACTICE TRACKS ACCORDION / LIST */}
+      {/* 4. PRIMARY SECTION: 6 LIVE TROUBLESHOOTING LABS (FIRST & PROMINENT) */}
       {loading ? (
         <div className="py-16">
           <LoadingSpinner label="Loading practice catalog..." size="lg" />
         </div>
-      ) : filteredCatalog.length === 0 ? (
-        <div className="text-center py-16 bg-slate-950/60 border border-dashed border-slate-800 rounded-2xl p-6">
-          <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-2 opacity-80" />
-          <h3 className="text-base font-bold text-slate-200">No practice items found</h3>
-          <p className="text-xs text-slate-400 mt-1 mb-4">
-            Try adjusting your search terms or clearing difficulty filters.
-          </p>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedDifficulty('All');
-              setSelectedCategoryTab('All');
-            }}
-          >
-            Reset Filters
-          </Button>
-        </div>
       ) : (
-        <div className="space-y-10">
-          {filteredCatalog.map((category) => (
-            <PracticeCategory
-              key={category.categoryId}
-              category={category}
-              onStartLab={handleStartLab}
-              onViewDetails={handleViewDetails}
-            />
-          ))}
+        <div className="space-y-12">
+          {/* A. LIVE TROUBLESHOOTING TRACK */}
+          {liveCategory && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                    <Wrench className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-black text-white font-mono tracking-tight">
+                        Live Troubleshooting Labs
+                      </h2>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+                        ● 6 Live Labs Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Investigate live failures with simulated CLI terminal, Monaco YAML editor, and authoritative validation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <PracticeCategory
+                category={liveCategory}
+                masteryMap={masteryMap}
+                onStartLab={handleStartLab}
+                onViewDetails={handleViewDetails}
+              />
+            </div>
+          )}
+
+          {/* B. FUTURE SCOPE & UPCOMING ROADMAP */}
+          {futureCategories.length > 0 && (
+            <div className="space-y-6 pt-6 border-t border-slate-800/80">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-400">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold text-slate-200 font-mono tracking-tight">
+                        Planned Practice Roadmap (Future Scope)
+                      </h2>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                        In Active Curriculum Design
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Foundation practice modules scheduled for subsequent releases.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {futureCategories.map((category) => (
+                  <PracticeCategory
+                    key={category.categoryId}
+                    category={category}
+                    masteryMap={masteryMap}
+                    onStartLab={handleStartLab}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -413,7 +607,7 @@ export const LearnCatalog = () => {
 
             {/* Description */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Mission Objective</h4>
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">Mission Objective</h4>
               <p className="text-sm text-slate-200 leading-relaxed font-sans">
                 {selectedDetailItem.description}
               </p>
@@ -425,29 +619,29 @@ export const LearnCatalog = () => {
                 <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
                   Simulated Kubernetes Failure Condition
                 </span>
-                <p className="text-xs font-mono text-amber-200">{selectedDetailItem.expectedFailure}</p>
+                <p className="text-xs font-mono text-amber-200 font-bold">{selectedDetailItem.expectedFailure}</p>
               </div>
             )}
 
             {/* What you will do */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Your Practical Mission</h4>
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">Your Practical Mission</h4>
               <ul className="space-y-1.5 text-xs text-slate-300">
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">1.</span>
-                  <span>Inspect the active failing pod state, container logs, and lifecycle events.</span>
+                  <span>Inspect active failing pod states, container crash logs, and lifecycle events.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">2.</span>
-                  <span>Identify the underlying root cause without breaking the sandbox cluster.</span>
+                  <span>Identify the underlying root cause without breaking sandbox cluster boundaries.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">3.</span>
-                  <span>Correct the manifest configuration in the YAML editor and apply the fix.</span>
+                  <span>Correct the manifest configuration in the Monaco YAML editor and apply fixes.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold">4.</span>
-                  <span>Validate that all pods return to a healthy Running state.</span>
+                  <span>Validate that all pods return to a healthy Running (1/1 Ready) state.</span>
                 </li>
               </ul>
             </div>
@@ -465,12 +659,12 @@ export const LearnCatalog = () => {
                     setSelectedDetailItem(null);
                     handleStartLab(item);
                   }}
-                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 font-bold"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" /> Start Lab Now
+                  <Play className="w-3.5 h-3.5 fill-current" /> Start Practice Lab
                 </Button>
               ) : (
-                <span className="text-xs font-mono text-slate-500 italic">Coming Soon in Next Update</span>
+                <span className="text-xs font-mono text-slate-500 italic">Curriculum in Development</span>
               )}
             </div>
           </div>

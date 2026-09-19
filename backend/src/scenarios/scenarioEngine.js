@@ -55,9 +55,12 @@ export const scenarioEngine = {
         // 3. Automatically generate initial ContextSnapshot & trigger proactive AI Diagnosis
         try {
           await contextService.generateAndSaveSnapshot(project._id, attemptDoc._id, userId);
-          await aiService.diagnoseAttempt(project._id, attemptDoc._id, userId);
+          // Run initial diagnosis asynchronously in background so lab returns instantly
+          aiService.diagnoseAttempt(project._id, attemptDoc._id, userId).catch((diagErr) => {
+            console.warn('[ScenarioEngine] Background AI diagnosis notice:', diagErr.message);
+          });
         } catch (ctxErr) {
-          console.warn('[ScenarioEngine] Automatic context snapshot or AI diagnosis warning:', ctxErr.message);
+          console.warn('[ScenarioEngine] Automatic context snapshot warning:', ctxErr.message);
         }
       } else {
         attemptDoc.status = 'failed';

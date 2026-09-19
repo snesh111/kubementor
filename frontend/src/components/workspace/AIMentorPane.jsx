@@ -56,7 +56,11 @@ export const AIMentorPane = ({ session, onSelectTab }) => {
       try {
         const res = await labService.aiHistory(labId);
         if (isMounted) {
-          const loadedMessages = res.data?.messages || [];
+          const loadedMessages =
+            res?.data?.data?.messages ||
+            res?.data?.messages ||
+            res?.messages ||
+            (Array.isArray(res) ? res : []);
           if (loadedMessages.length > 0) {
             setMessages(loadedMessages);
             // Detect provider from last message
@@ -107,7 +111,7 @@ export const AIMentorPane = ({ session, onSelectTab }) => {
 
     try {
       const res = await labService.aiDiagnose(labId);
-      const aiResp = res.data?.aiResponse || {};
+      const aiResp = res?.data?.data?.aiResponse || res?.data?.aiResponse || res?.aiResponse || res || {};
       setProviderMode(aiResp.provider || 'fallback');
 
       const newMsg = {
@@ -141,8 +145,8 @@ export const AIMentorPane = ({ session, onSelectTab }) => {
 
     try {
       const res = await labService.aiHint(labId, targetLevel);
-      const aiResp = res.data?.aiResponse || {};
-      const returnedLevel = res.data?.hintLevel || targetLevel;
+      const aiResp = res?.data?.data?.aiResponse || res?.data?.aiResponse || res?.aiResponse || res || {};
+      const returnedLevel = res?.data?.hintLevel || res?.hintLevel || targetLevel;
       setProviderMode(aiResp.provider || 'fallback');
 
       const newMsg = {
@@ -197,7 +201,7 @@ export const AIMentorPane = ({ session, onSelectTab }) => {
 
     try {
       const res = await labService.aiChat(labId, trimmed);
-      const aiResp = res.data?.aiResponse || {};
+      const aiResp = res?.data?.data?.aiResponse || res?.data?.aiResponse || res?.aiResponse || res || {};
       setProviderMode(aiResp.provider || 'fallback');
 
       const assistantMsg = {

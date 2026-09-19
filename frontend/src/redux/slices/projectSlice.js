@@ -6,7 +6,12 @@ export const fetchProjects = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await projectService.getProjects();
-      return response.data.projects;
+      const list =
+        response?.data?.projects ||
+        response?.projects ||
+        (Array.isArray(response?.data) ? response.data : null) ||
+        (Array.isArray(response) ? response : []);
+      return Array.isArray(list) ? list : [];
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to fetch projects');
     }
@@ -18,7 +23,8 @@ export const fetchProjectById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await projectService.getProjectById(id);
-      return response.data.project;
+      const proj = response?.data?.project || response?.project || response?.data || response;
+      return proj || null;
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to fetch project details');
     }
@@ -30,7 +36,8 @@ export const createProject = createAsyncThunk(
   async (projectData, { rejectWithValue }) => {
     try {
       const response = await projectService.createProject(projectData);
-      return response.data.project;
+      const proj = response?.data?.project || response?.project || response?.data || response;
+      return proj;
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to create project');
     }
@@ -42,7 +49,8 @@ export const updateProject = createAsyncThunk(
   async ({ id, data }, { rejectWithValue }) => {
     try {
       const response = await projectService.updateProject(id, data);
-      return response.data.project;
+      const proj = response?.data?.project || response?.project || response?.data || response;
+      return proj;
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to update project');
     }
@@ -91,11 +99,14 @@ export const projectSlice = createSlice({
       })
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.loading = false;
-        state.projects = action.payload;
+        state.projects = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchProjects.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        if (!Array.isArray(state.projects)) {
+          state.projects = [];
+        }
       })
 
       // Fetch Project By ID
@@ -120,7 +131,10 @@ export const projectSlice = createSlice({
       })
       .addCase(createProject.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.projects.unshift(action.payload);
+        if (action.payload && typeof action.payload === 'object') {
+          if (!Array.isArray(state.projects)) state.projects = [];
+          state.projects.unshift(action.payload);
+        }
       })
       .addCase(createProject.rejected, (state, action) => {
         state.actionLoading = false;
@@ -134,12 +148,14 @@ export const projectSlice = createSlice({
       })
       .addCase(updateProject.fulfilled, (state, action) => {
         state.actionLoading = false;
-        const index = state.projects.findIndex((p) => p._id === action.payload._id);
-        if (index !== -1) {
-          state.projects[index] = action.payload;
-        }
-        if (state.currentProject && state.currentProject._id === action.payload._id) {
-          state.currentProject = action.payload;
+        if (action.payload && action.payload._id && Array.isArray(state.projects)) {
+          const index = state.projects.findIndex((p) => p._id === action.payload._id);
+          if (index !== -1) {
+            state.projects[index] = action.payload;
+          }
+          if (state.currentProject && state.currentProject._id === action.payload._id) {
+            state.currentProject = action.payload;
+          }
         }
       })
       .addCase(updateProject.rejected, (state, action) => {
@@ -154,7 +170,9 @@ export const projectSlice = createSlice({
       })
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.projects = state.projects.filter((p) => p._id !== action.payload);
+        if (Array.isArray(state.projects)) {
+          state.projects = state.projects.filter((p) => p._id !== action.payload);
+        }
         if (state.currentProject && state.currentProject._id === action.payload) {
           state.currentProject = null;
         }

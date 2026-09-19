@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Bomb,
   StopCircle,
@@ -16,12 +15,17 @@ import {
   Sparkles,
   LockKeyhole,
   BookOpen,
+  Trophy,
+  CheckCircle2,
+  RotateCcw,
+  Target,
 } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 
-export const PracticeCard = ({ item, onStartLab, onViewDetails }) => {
+export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) => {
   const isLive = item.isLive !== false && item.status === 'Available';
+  const effectiveMastery = masteryState || item.masteryState;
 
   const getIcon = (name) => {
     switch (name) {
@@ -78,9 +82,25 @@ export const PracticeCard = ({ item, onStartLab, onViewDetails }) => {
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getDifficultyBadge(item.difficulty)}`}>
               {item.difficulty}
             </span>
-            <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-              <Clock className="w-3 h-3 text-slate-500" /> {item.estTime || '15 mins'}
-            </span>
+            {effectiveMastery && (
+              effectiveMastery === 'MASTERED' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] font-mono font-bold">
+                  <Trophy className="w-3 h-3 text-purple-400" /> Mastered
+                </span>
+              ) : effectiveMastery === 'COMPLETED' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
+                </span>
+              ) : effectiveMastery === 'PRACTICING' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono font-bold">
+                  <RotateCcw className="w-3 h-3 text-amber-400" /> Practicing
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900 text-slate-500 border border-slate-800 text-[10px] font-mono">
+                  Not Started
+                </span>
+              )
+            )}
           </div>
 
           {isLive ? (

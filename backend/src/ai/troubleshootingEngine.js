@@ -1,12 +1,29 @@
 import geminiProvider from './geminiProvider.js';
 import promptTemplates from './promptTemplates.js';
 import { formatContextForAI } from './contextFormatter.js';
+import cacheService from '../services/cacheService.js';
 
 export const troubleshootingEngine = {
   /**
-   * Process AI Mentor request using Gemini or context-grounded fallback
+   * Process AI Mentor request using Gemini or context-grounded fallback with Caching
    */
   processMentorRequest: async (mode, snapshotObj, extraParams = {}) => {
+    // Check Cache Key
+    const cacheKey = cacheService.generateKey(`ai:${mode}`, {
+      scenarioId: snapshotObj?.context?.scenario?.id || 'default',
+      observed: snapshotObj?.context?.observedFailure?.reason || 'none',
+      extra: extraParams,
+    });
+
+    try {
+      const cached = await cacheService.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    } catch (cacheErr) {
+      // Ignore cache lookup error
+    }
+
     const formattedContext = formatContextForAI(snapshotObj);
     const systemPrompt = promptTemplates.getSystemPrompt();
 
@@ -32,6 +49,8 @@ export const troubleshootingEngine = {
         break;
     }
 
+    let finalResponse = null;
+
     // Call Gemini API if available
     const geminiResult = await geminiProvider.generateResponse(systemPrompt, userPrompt);
 
@@ -41,19 +60,29 @@ export const troubleshootingEngine = {
         parsedJSON.provider = 'gemini';
         parsedJSON.model = geminiResult.model || 'gemini-3.6-flash';
         parsedJSON.isFallback = false;
-        return parsedJSON;
+        finalResponse = parsedJSON;
       }
-      console.warn('[Troubleshooting Engine] Could not parse Gemini JSON response. Using structured parser fallback.');
     }
 
-    // Fallback context-grounded response engine
-    const fallbackResponse = troubleshootingEngine.buildGroundedFallbackResponse(mode, snapshotObj, extraParams);
-    fallbackResponse.provider = 'fallback';
-    fallbackResponse.isFallback = true;
-    if (geminiResult.error) {
-      fallbackResponse.fallbackReason = geminiResult.error;
+    if (!finalResponse) {
+      // Fallback context-grounded response engine
+      const fallbackResponse = troubleshootingEngine.buildGroundedFallbackResponse(mode, snapshotObj, extraParams);
+      fallbackResponse.provider = 'fallback';
+      fallbackResponse.isFallback = true;
+      if (geminiResult.error) {
+        fallbackResponse.fallbackReason = geminiResult.error;
+      }
+      finalResponse = fallbackResponse;
     }
-    return fallbackResponse;
+
+    // Cache final response for 1 hour
+    try {
+      await cacheService.set(cacheKey, finalResponse, 3600);
+    } catch (setErr) {
+      // Ignore cache write error
+    }
+
+    return finalResponse;
   },
 
   /**
@@ -78,9 +107,11 @@ export const troubleshootingEngine = {
     const podName = pod.name || 'web-app-pod';
     const restarts = pod.restarts || 0;
     const exitCode = container.exitCode;
+    const isServiceOrIngressScenario = scenarioId === 'service-connectivity' || scenarioId === 'ingress-tls-failure';
+    const isFixed = scenario.isFixed === true;
     const isPodReady = pod.ready === true;
     const isRunningPhase = pod.phase === 'Running';
-    const isWorkloadHealthy = isPodReady && isRunningPhase && (!observed.status || observed.status === 'Running' || observed.status === 'Ready');
+    const isWorkloadHealthy = isFixed || (!isServiceOrIngressScenario && isPodReady && isRunningPhase && (observed.reason === 'WorkloadHealthy' || observed.status === 'Running'));
 
     // Handle Healthy/Resolved State
     if (isWorkloadHealthy) {

@@ -6,6 +6,7 @@ import DeploymentRecord from '../models/DeploymentRecord.js';
 import ScenarioAttempt from '../models/ScenarioAttempt.js';
 import LabNote from '../models/LabNote.js';
 import ContextSnapshot from '../models/ContextSnapshot.js';
+import ValidationResult from '../models/ValidationResult.js';
 import AIConversation from '../models/AIConversation.js';
 import AIMentorResponse from '../models/AIMentorResponse.js';
 import k8sService from '../kubernetes/k8sService.js';
@@ -15,6 +16,8 @@ import scenarioService from '../scenarios/scenarioService.js';
 import contextService from '../context/contextService.js';
 import troubleshootingEngine from '../ai/troubleshootingEngine.js';
 import aiService from '../ai/aiService.js';
+import validationService from '../validation/validationService.js';
+import byoaService from './byoaService.js';
 import k8sClientWrapper from '../kubernetes/k8sClient.js';
 import { ApiError } from '../middleware/errorMiddleware.js';
 
@@ -345,7 +348,19 @@ export const labService = {
    * @returns {Object} Unified LabSession object
    */
   startLab: async (userId, labId) => {
-    // 1. Ensure default scenarios seeded and validate labId
+    // 1. Check if BYOA lab session
+    const byoaProject = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+      isBYOA: true,
+    });
+
+    if (byoaProject) {
+      return await labService.getLabSession(userId, labId);
+    }
+
+    // 2. Ensure default scenarios seeded and validate labId
     await scenarioService.seedDefaultScenarios();
     const scenarioDoc = await FailureScenario.findOne({ scenarioId: labId, enabled: true });
     if (!scenarioDoc) {
@@ -420,22 +435,24 @@ export const labService = {
     }
 
     // 5. Ensure starter files exist in DB
-    await ProjectFile.deleteMany({ project: project._id, owner: userId });
-    const starterManifests = labService.getStarterManifests(labId);
-    const createdFiles = [];
+    let createdFiles = await ProjectFile.find({ project: project._id, owner: userId }).sort({ originalName: 1 });
+    if (createdFiles.length === 0) {
+      const starterManifests = labService.getStarterManifests(labId);
+      createdFiles = [];
 
-    for (const item of starterManifests) {
-      const file = await ProjectFile.create({
-        project: project._id,
-        owner: userId,
-        originalName: item.originalName,
-        storedName: `${Date.now()}-${item.originalName}`,
-        fileType: item.fileType || 'yaml',
-        mimeType: item.mimeType || 'application/x-yaml',
-        size: Buffer.byteLength(item.content),
-        content: item.content,
-      });
-      createdFiles.push(file);
+      for (const item of starterManifests) {
+        const file = await ProjectFile.create({
+          project: project._id,
+          owner: userId,
+          originalName: item.originalName,
+          storedName: `${Date.now()}-${item.originalName}`,
+          fileType: item.fileType || 'yaml',
+          mimeType: item.mimeType || 'application/x-yaml',
+          size: Buffer.byteLength(item.content),
+          content: item.content,
+        });
+        createdFiles.push(file);
+      }
     }
 
     // 6. Deploy starter application to isolated sandbox
@@ -493,6 +510,70 @@ export const labService = {
    * @returns {Object} Unified LabSession object
    */
   getLabSession: async (userId, labId) => {
+    // 1. Check for BYOA lab session
+    const byoaProject = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+      isBYOA: true,
+    });
+
+    if (byoaProject) {
+      const attempt = await ScenarioAttempt.findOne({
+        project: byoaProject._id,
+        user: userId,
+      }).sort({ createdAt: -1 });
+
+      const deployment = await DeploymentRecord.findOne({
+        project: byoaProject._id,
+        user: userId,
+      }).sort({ createdAt: -1 });
+
+      if (!attempt || !deployment) {
+        throw new ApiError('No active BYOA lab session found', 404);
+      }
+
+      let contextSnapshot = null;
+      try {
+        contextSnapshot = await contextService.getContextByAttemptId(byoaProject._id, attempt._id, userId);
+      } catch (ctxErr) {
+        console.warn('[LabService] BYOA Context fetch warning:', ctxErr.message);
+      }
+
+      const files = await ProjectFile.find({ project: byoaProject._id, owner: userId }).sort({ originalName: 1 });
+
+      return {
+        labId: byoaProject.labId,
+        title: byoaProject.name,
+        difficulty: 'Advanced',
+        internalProjectId: byoaProject._id,
+        attemptId: attempt._id,
+        deploymentId: deployment._id,
+        namespace: deployment.namespace,
+        mode: k8sClientWrapper.isConnected ? 'kubernetes' : 'simulation',
+        starterFiles: files.map((f) => f.toResponseObject(true)),
+        isBYOA: true,
+        concept: {
+          whatIsIt: 'Bring Your Own Application (BYOA) allows you to import and test your custom Kubernetes manifests in an isolated, safe sandbox environment.',
+          troubleshootingPlaybook: [
+            { stepNumber: 1, title: 'Inspect Pods & Deployments', description: 'Run kubectl get pods,deployments to check status.', command: `kubectl get all -n ${deployment.namespace}` },
+            { stepNumber: 2, title: 'Review Logs', description: 'Inspect container stdout/stderr logs.', command: `kubectl logs <pod-name> -n ${deployment.namespace}` },
+            { stepNumber: 3, title: 'Check Services & Endpoints', description: 'Verify service selectors match pod labels.', command: `kubectl get endpoints -n ${deployment.namespace}` },
+            { stepNumber: 4, title: 'Validate Health', description: 'Click Validate My Solution to run automated runtime health checks.' },
+          ],
+        },
+        mission: {
+          description: `Custom application workspace for '${byoaProject.name}'. Isolated namespace: '${deployment.namespace}'.`,
+          objective: 'Observe application behavior in terminal, edit manifests in YAML editor, investigate with AI Mentor, and validate workload health.',
+          expectedFailure: 'Custom Workload Health Check',
+        },
+        initialStatus: attempt.status,
+        initialContext: contextSnapshot?.context || null,
+        summary: contextSnapshot?.summary || null,
+        resumed: true,
+      };
+    }
+
     const scenarioDoc = await FailureScenario.findOne({ scenarioId: labId, enabled: true });
     if (!scenarioDoc) {
       throw new ApiError(`Lab scenario '${labId}' not found`, 404);
@@ -511,7 +592,6 @@ export const labService = {
     const attempt = await ScenarioAttempt.findOne({
       project: project._id,
       user: userId,
-      scenarioId: labId,
     }).sort({ createdAt: -1 });
 
     const deployment = await DeploymentRecord.findOne({
@@ -562,6 +642,86 @@ export const labService = {
    * @returns {Object} Fresh LabSession object
    */
   resetLab: async (userId, labId) => {
+    // 1. Check for BYOA lab
+    const byoaProject = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+      isBYOA: true,
+    });
+
+    if (byoaProject) {
+      const files = await ProjectFile.find({ project: byoaProject._id, owner: userId });
+      if (files.length === 0) {
+        throw new ApiError('No manifest files found in BYOA workspace to reset', 400);
+      }
+
+      const deployment = await DeploymentRecord.findOne({
+        project: byoaProject._id,
+        user: userId,
+      }).sort({ createdAt: -1 });
+
+      const namespace = deployment ? deployment.namespace : `kubementor-u${userId}-p${byoaProject._id}`;
+      const resourceResults = await deploymentService.deployManifests(namespace, files);
+
+      if (deployment) {
+        deployment.resources = resourceResults;
+        deployment.status = 'running';
+        await deployment.save();
+      }
+
+      let attempt = await ScenarioAttempt.findOne({
+        project: byoaProject._id,
+        user: userId,
+      }).sort({ createdAt: -1 });
+
+      if (attempt) {
+        attempt.status = 'active';
+        await attempt.save();
+      }
+
+      let contextSnapshot = null;
+      try {
+        if (attempt) {
+          const snapshotResult = await contextService.generateAndSaveSnapshot(byoaProject._id, attempt._id, userId);
+          contextSnapshot = await ContextSnapshot.findById(snapshotResult.snapshotId);
+        }
+      } catch (ctxErr) {
+        console.warn('[LabService] BYOA reset context warning:', ctxErr.message);
+      }
+
+      return {
+        labId: byoaProject.labId,
+        title: byoaProject.name,
+        difficulty: 'Advanced',
+        internalProjectId: byoaProject._id,
+        attemptId: attempt?._id,
+        deploymentId: deployment?._id,
+        namespace,
+        mode: k8sClientWrapper.isConnected ? 'kubernetes' : 'simulation',
+        starterFiles: files.map((f) => f.toResponseObject(true)),
+        isBYOA: true,
+        concept: {
+          whatIsIt: 'Bring Your Own Application (BYOA) allows you to import and test your custom Kubernetes manifests in an isolated, safe sandbox environment.',
+          troubleshootingPlaybook: [
+            { stepNumber: 1, title: 'Inspect Pods & Deployments', description: 'Run kubectl get pods,deployments to check status.', command: `kubectl get all -n ${namespace}` },
+            { stepNumber: 2, title: 'Review Logs', description: 'Inspect container stdout/stderr logs.', command: `kubectl logs <pod-name> -n ${namespace}` },
+            { stepNumber: 3, title: 'Check Services & Endpoints', description: 'Verify service selectors match pod labels.', command: `kubectl get endpoints -n ${namespace}` },
+            { stepNumber: 4, title: 'Validate Health', description: 'Click Validate My Solution to run automated runtime health checks.' },
+          ],
+        },
+        mission: {
+          description: `Custom application workspace for '${byoaProject.name}'. Isolated namespace: '${namespace}'.`,
+          objective: 'Observe application behavior in terminal, edit manifests in YAML editor, investigate with AI Mentor, and validate workload health.',
+          expectedFailure: 'Custom Workload Health Check',
+        },
+        initialStatus: attempt?.status || 'active',
+        initialContext: contextSnapshot?.context || null,
+        summary: contextSnapshot?.summary || null,
+        resumed: false,
+      };
+    }
+
     const scenarioDoc = await FailureScenario.findOne({ scenarioId: labId, enabled: true });
     if (!scenarioDoc) {
       throw new ApiError(`Lab scenario '${labId}' not found`, 404);
@@ -819,6 +979,20 @@ export const labService = {
     // 5. Generate fresh ContextSnapshot reflecting newly deployed state
     const freshSnapshot = await contextService.generateAndSaveSnapshot(project._id, attempt._id, userId);
 
+    if (project.isBYOA) {
+      return {
+        success: true,
+        mode: k8sClientWrapper.isConnected ? 'kubernetes' : 'simulation',
+        namespace,
+        appliedFiles: files.map((f) => f.originalName),
+        status: 'deployed',
+        observedFailure: null,
+        message: 'BYOA manifests applied successfully to isolated sandbox environment.',
+        context: freshSnapshot.context,
+        summary: freshSnapshot.summary,
+      };
+    }
+
     // 6. Check if fix resolved the scenario in simulation / live state
     const updatedAttempt = await ScenarioAttempt.findById(attempt._id);
     const isFixed = updatedAttempt?.restorationDetails?.fixApplied === true;
@@ -982,13 +1156,14 @@ export const labService = {
     const attempt = await ScenarioAttempt.findOne({
       project: project._id,
       user: userId,
-      scenarioId: labId,
     }).sort({ createdAt: -1 });
 
-    const deployment = await DeploymentRecord.findOne({
-      project: project._id,
-      user: userId,
-    }).sort({ createdAt: -1 });
+    const deployment = attempt?.deployment
+      ? await DeploymentRecord.findById(attempt.deployment)
+      : await DeploymentRecord.findOne({
+          project: project._id,
+          user: userId,
+        }).sort({ createdAt: -1 });
 
     if (!attempt || !deployment) {
       throw new ApiError('No active scenario attempt or deployment found for this lab', 404);
@@ -1278,6 +1453,137 @@ export const labService = {
       conceptQuery: concept,
       aiResponse: responseObj,
     };
+  },
+
+  /**
+   * Validate learner's solution against authoritative runtime cluster state
+   * @param {string} userId
+   * @param {string} labId
+   * @returns {Object} Deterministic validation result
+   */
+  validateLabSolution: async (userId, labId) => {
+    const project = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+    });
+
+    if (!project) {
+      throw new ApiError('No active lab session found for this scenario to validate', 404);
+    }
+
+    if (project.isBYOA) {
+      return await byoaService.validateBYOAHealth(userId, labId);
+    }
+
+    const attempt = await ScenarioAttempt.findOne({
+      project: project._id,
+      user: userId,
+      scenarioId: labId,
+    }).sort({ createdAt: -1 });
+
+    if (!attempt) {
+      throw new ApiError('No active scenario attempt found for this lab', 404);
+    }
+
+    // Call validationService without forced redeployment (validating active deployed runtime state)
+    const result = await validationService.validateUserFix(project._id, attempt._id, null, userId);
+
+    return {
+      labId,
+      internalProjectId: project._id,
+      attemptId: attempt._id,
+      ...result,
+    };
+  },
+
+  /**
+   * Get validation attempt history for active lab
+   * @param {string} userId
+   * @param {string} labId
+   * @returns {Array} Validation history attempts
+   */
+  getLabValidationHistory: async (userId, labId) => {
+    const project = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+    });
+
+    if (!project) {
+      throw new ApiError('No active lab session found for this scenario', 404);
+    }
+
+    const history = await ValidationResult.find({
+      project: project._id,
+      user: userId,
+      scenario: labId,
+    }).sort({ createdAt: -1 });
+
+    return history.map((h) => h.toResponseObject());
+  },
+
+  /**
+   * Get specific validation attempt details by validation ID
+   * @param {string} userId
+   * @param {string} labId
+   * @param {string} validationId
+   * @returns {Object} Validation attempt record
+   */
+  getLabValidationAttempt: async (userId, labId, validationId) => {
+    const project = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+    });
+
+    if (!project) {
+      throw new ApiError('No active lab session found for this scenario', 404);
+    }
+
+    const valDoc = await ValidationResult.findOne({
+      _id: validationId,
+      project: project._id,
+      user: userId,
+      scenario: labId,
+    });
+
+    if (!valDoc) {
+      throw new ApiError('Validation attempt record not found', 404);
+    }
+
+    return valDoc.toResponseObject();
+  },
+
+  /**
+   * Get guided post-mortem analysis for passed lab attempt
+   * @param {string} userId
+   * @param {string} labId
+   * @returns {Object} Post-mortem report
+   */
+  getLabPostMortem: async (userId, labId) => {
+    const project = await Project.findOne({
+      owner: userId,
+      isLabInternal: true,
+      labId,
+    });
+
+    if (!project) {
+      throw new ApiError('No active lab session found for this scenario', 404);
+    }
+
+    const valDoc = await ValidationResult.findOne({
+      project: project._id,
+      user: userId,
+      scenario: labId,
+      status: 'PASS',
+    }).sort({ createdAt: -1 });
+
+    if (!valDoc || !valDoc.postMortem) {
+      throw new ApiError('No passed validation found for this scenario to build post-mortem', 404);
+    }
+
+    return valDoc.postMortem;
   },
 };
 

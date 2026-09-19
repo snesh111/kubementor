@@ -38,6 +38,26 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Google OAuth Sign-In / Sign-Up
+ * @route   POST /api/v1/auth/google
+ * @access  Public
+ */
+export const googleLoginUser = asyncHandler(async (req, res) => {
+  const result = await authService.googleAuth(req.body || {});
+  return ApiResponse.success(res, 'Logged in with Google account', result, 200);
+});
+
+/**
+  * @desc    One-click demo evaluation login
+  * @route   POST /api/v1/auth/demo
+  * @access  Public
+  */
+export const demoLoginUser = asyncHandler(async (req, res) => {
+  const result = await authService.demoLogin();
+  return ApiResponse.success(res, 'Logged in with Demo Evaluator profile', result, 200);
+});
+
+/**
  * @desc    Get current authenticated user profile
  * @route   GET /api/v1/auth/profile
  * @access  Private
@@ -61,3 +81,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
   const updatedProfile = await authService.updateUserProfile(req.user._id, req.body);
   return ApiResponse.success(res, 'Profile updated successfully', { user: updatedProfile });
 });
+
+export default {
+  registerUser,
+  loginUser,
+  googleLoginUser,
+  demoLoginUser,
+  getProfile,
+  updateProfile,
+};

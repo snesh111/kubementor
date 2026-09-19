@@ -301,6 +301,50 @@ export const explainLabConcept = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, 'Kubernetes concept explanation generated', result, 200);
 });
 
+/**
+ * @desc    Validate learner solution against authoritative runtime state
+ * @route   POST /api/v1/labs/:labId/validate
+ * @access  Private
+ */
+export const validateLabSolution = asyncHandler(async (req, res) => {
+  const { labId } = req.params;
+  const result = await labService.validateLabSolution(req.user._id, labId);
+  return ApiResponse.success(res, result.summary, result, 200);
+});
+
+/**
+ * @desc    Get validation attempts history for active lab
+ * @route   GET /api/v1/labs/:labId/validation
+ * @access  Private
+ */
+export const getLabValidationHistory = asyncHandler(async (req, res) => {
+  const { labId } = req.params;
+  const history = await labService.getLabValidationHistory(req.user._id, labId);
+  return ApiResponse.success(res, 'Validation history retrieved successfully', { history }, 200);
+});
+
+/**
+ * @desc    Get specific validation attempt details by validation ID
+ * @route   GET /api/v1/labs/:labId/validation/:attemptId
+ * @access  Private
+ */
+export const getLabValidationAttempt = asyncHandler(async (req, res) => {
+  const { labId, attemptId } = req.params;
+  const validation = await labService.getLabValidationAttempt(req.user._id, labId, attemptId);
+  return ApiResponse.success(res, 'Validation attempt retrieved successfully', { validation }, 200);
+});
+
+/**
+ * @desc    Get guided post-mortem report for successful lab attempt
+ * @route   GET /api/v1/labs/:labId/post-mortem/:attemptId
+ * @access  Private
+ */
+export const getLabPostMortem = asyncHandler(async (req, res) => {
+  const { labId } = req.params;
+  const postMortem = await labService.getLabPostMortem(req.user._id, labId);
+  return ApiResponse.success(res, 'Post-mortem report retrieved successfully', { postMortem }, 200);
+});
+
 export default {
   getPracticeCatalog,
   startLabSession,
@@ -318,4 +362,8 @@ export default {
   getLabChatHistory,
   explainLabEvidence,
   explainLabConcept,
+  validateLabSolution,
+  getLabValidationHistory,
+  getLabValidationAttempt,
+  getLabPostMortem,
 };

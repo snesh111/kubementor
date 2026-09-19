@@ -2,7 +2,7 @@ import React from 'react';
 import { Layers, Settings, Wrench, ShieldAlert, Sparkles } from 'lucide-react';
 import PracticeCard from './PracticeCard';
 
-export const PracticeCategory = ({ category, onStartLab, onViewDetails }) => {
+export const PracticeCategory = ({ category, masteryMap, onStartLab, onViewDetails }) => {
   const getCategoryIcon = (categoryId) => {
     switch (categoryId) {
       case 'basics':
@@ -49,6 +49,7 @@ export const PracticeCategory = ({ category, onStartLab, onViewDetails }) => {
           <PracticeCard
             key={item.id || item.slug}
             item={item}
+            masteryState={masteryMap ? masteryMap[item.scenarioId || item.slug || item.id] : item.masteryState}
             onStartLab={onStartLab}
             onViewDetails={onViewDetails}
           />

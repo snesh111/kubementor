@@ -2,6 +2,8 @@ import express from 'express';
 import {
   registerUser,
   loginUser,
+  googleLoginUser,
+  demoLoginUser,
   getProfile,
   updateProfile,
 } from '../controllers/authController.js';
@@ -12,6 +14,8 @@ const router = express.Router();
 // Public routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/google', googleLoginUser);
+router.post('/demo', demoLoginUser);
 
 // Protected routes
 router.get('/profile', authenticate, getProfile);

@@ -39,7 +39,11 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
       setLoadingFiles(true);
       setValidationError(null);
       const res = await labService.getLabFiles(labId);
-      const fileList = res.data?.data?.files || [];
+      const fileList =
+        res?.data?.data?.files ||
+        res?.data?.files ||
+        res?.files ||
+        (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
       setFiles(fileList);
 
       const contentsMap = {};
@@ -93,7 +97,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
       setSaveSuccessMsg(null);
 
       const res = await labService.saveLabFile(labId, filenameToSave, contentToSave);
-      const savedDoc = res.data?.data?.file;
+      const savedDoc = res?.data?.data?.file || res?.data?.file || res?.file || res;
 
       setSavedContents((prev) => ({
         ...prev,
@@ -145,7 +149,12 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
       setDeploymentResult(null);
 
       const res = await labService.deployLab(labId);
-      const result = res.data?.data?.deploymentResult;
+      const result =
+        res?.data?.data?.deploymentResult ||
+        res?.data?.deploymentResult ||
+        res?.deploymentResult ||
+        res?.data ||
+        res;
       setDeploymentResult(result);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Deployment execution failed';

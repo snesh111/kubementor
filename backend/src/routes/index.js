@@ -10,12 +10,16 @@ import aiRoutes from './aiRoutes.js';
 import validationRoutes from './validationRoutes.js';
 import k8sRoutes from './k8sRoutes.js';
 import labRoutes from './labRoutes.js';
+import progressRoutes from './progressRoutes.js';
+import byoaRoutes from './byoaRoutes.js';
 
 const router = express.Router();
 
 // Mount API Endpoints under /api/v1
 router.use('/auth', authRoutes);
 router.use('/labs', labRoutes);
+router.use('/progress', progressRoutes);
+router.use('/byoa', byoaRoutes);
 router.use('/projects', projectRoutes);
 router.use('/projects/:projectId/files', projectFileRoutes);
 router.use('/projects/:projectId', analyzerRoutes);

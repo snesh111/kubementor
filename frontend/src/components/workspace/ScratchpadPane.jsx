@@ -67,7 +67,7 @@ export const ScratchpadPane = ({ session, onSelectTab }) => {
       setLoading(true);
       setSaveError(null);
       const res = await labService.getLabNotes(labId);
-      const data = res.data?.data?.notes || {};
+      const data = res?.data?.data?.notes || res?.data?.notes || res?.notes || res?.data || res || {};
 
       const loaded = {
         evidence: data.evidence || '',
@@ -103,7 +103,7 @@ export const ScratchpadPane = ({ session, onSelectTab }) => {
       setSaving(true);
       setSaveError(null);
       const res = await labService.saveLabNotes(labId, dataToSave);
-      const savedDoc = res.data?.data?.notes || {};
+      const savedDoc = res?.data?.data?.notes || res?.data?.notes || res?.notes || res?.data || res || {};
 
       const updated = {
         evidence: savedDoc.evidence || '',

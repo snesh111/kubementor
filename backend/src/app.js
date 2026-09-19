@@ -8,11 +8,18 @@ import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
 
-// Security HTTP headers
-app.use(helmet());
-
-// Cross-Origin Resource Sharing
+// Cross-Origin Resource Sharing (must be before routes & helmet)
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Security HTTP headers configured for cross-origin APIs
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
 
 // HTTP Request Logger
 if (process.env.NODE_ENV === 'development') {

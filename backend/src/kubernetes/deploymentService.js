@@ -33,7 +33,7 @@ export const deploymentService = {
         const deploymentRecord = await DeploymentRecord.findOne({ namespace });
         if (deploymentRecord) {
           const activeAttempt = await ScenarioAttempt.findOne({
-            deployment: deploymentRecord._id,
+            $or: [{ deployment: deploymentRecord._id }, { project: deploymentRecord.project }],
             status: { $in: ['active', 'injecting'] },
           }).sort({ createdAt: -1 });
 
@@ -45,11 +45,11 @@ export const deploymentService = {
               isFixed = true;
             } else if (activeAttempt.scenarioId === 'oom-killed' && (container?.resources?.limits?.memory || '256Mi') !== '16Mi') {
               isFixed = true;
-            } else if (activeAttempt.scenarioId === 'missing-configmap' && parseResult.documents.some((d) => d.kind === 'ConfigMap')) {
+            } else if (activeAttempt.scenarioId === 'missing-configmap' && parseResult.documents.some((d) => d.kind === 'ConfigMap' && (d.metadata?.name === 'app-config' || !d.metadata?.name))) {
               isFixed = true;
             } else if (activeAttempt.scenarioId === 'service-connectivity') {
               const svcDoc = parseResult.documents.find((d) => d.kind === 'Service');
-              const depLabels = depDoc?.spec?.template?.metadata?.labels || {};
+              const depLabels = depDoc?.spec?.template?.metadata?.labels || { app: 'web-app' };
               const svcSelector = svcDoc?.spec?.selector || {};
               if (Object.keys(svcSelector).length > 0 && Object.entries(svcSelector).every(([k, v]) => depLabels[k] === v)) {
                 isFixed = true;
@@ -57,7 +57,7 @@ export const deploymentService = {
             } else if (activeAttempt.scenarioId === 'ingress-tls-failure') {
               const ingDoc = parseResult.documents.find((d) => d.kind === 'Ingress');
               const tlsSecret = ingDoc?.spec?.tls?.[0]?.secretName;
-              if (tlsSecret && tlsSecret !== 'nonexistent-tls-secret-failure') {
+              if (tlsSecret && tlsSecret === 'example-tls-secret') {
                 isFixed = true;
               }
             }

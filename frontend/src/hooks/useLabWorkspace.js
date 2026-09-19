@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import labService from '../services/labService';
 
 export const PROVISIONING_STEPS = [
@@ -15,9 +15,11 @@ export const useLabWorkspace = (labId) => {
   const [provisioningStep, setProvisioningStep] = useState(1);
   const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState(null);
+  const inFlightRef = useRef(false);
 
   const startOrResumeLab = useCallback(async () => {
-    if (!labId) return;
+    if (!labId || inFlightRef.current) return;
+    inFlightRef.current = true;
 
     setIsProvisioning(true);
     setError(null);
@@ -37,20 +39,31 @@ export const useLabWorkspace = (labId) => {
         // No active session found, start new lab
       }
 
-      if (res?.data?.data?.session) {
+      const existingSession =
+        res?.data?.session || res?.session || res?.data?.data?.session || (res?.labId ? res : null);
+
+      if (existingSession) {
         setProvisioningStep(5);
-        setSession(res.data.data.session);
+        setSession(existingSession);
         setIsProvisioning(false);
+        inFlightRef.current = false;
         return;
       }
 
       // 2. Provision new lab session
       const startRes = await labService.startLab(labId);
-      if (startRes?.data?.data?.session) {
+      const newSession =
+        startRes?.data?.session ||
+        startRes?.session ||
+        startRes?.data?.data?.session ||
+        (startRes?.labId ? startRes : null);
+
+      if (newSession) {
         setProvisioningStep(5);
         setTimeout(() => {
-          setSession(startRes.data.data.session);
+          setSession(newSession);
           setIsProvisioning(false);
+          inFlightRef.current = false;
         }, 300);
       } else {
         throw new Error('Could not parse lab session response.');
@@ -59,6 +72,7 @@ export const useLabWorkspace = (labId) => {
       console.error('[useLabWorkspace] Provisioning error:', err);
       setError(err.response?.data?.message || err.message || 'Failed to provision lab workspace.');
       setIsProvisioning(false);
+      inFlightRef.current = false;
     } finally {
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
@@ -74,8 +88,10 @@ export const useLabWorkspace = (labId) => {
 
     try {
       const res = await labService.resetLab(labId);
-      if (res?.data?.data?.session) {
-        setSession(res.data.data.session);
+      const resetSession =
+        res?.data?.session || res?.session || res?.data?.data?.session || (res?.labId ? res : null);
+      if (resetSession) {
+        setSession(resetSession);
       }
     } catch (err) {
       console.error('[useLabWorkspace] Reset error:', err);

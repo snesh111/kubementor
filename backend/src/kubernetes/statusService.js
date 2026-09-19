@@ -14,7 +14,7 @@ export const statusService = {
       deploymentRecord = await DeploymentRecord.findOne({ namespace }).sort({ createdAt: -1 });
       if (deploymentRecord) {
         activeAttempt = await ScenarioAttempt.findOne({
-          deployment: deploymentRecord._id,
+          $or: [{ deployment: deploymentRecord._id }, { project: deploymentRecord.project }],
           status: { $in: ['active', 'injecting'] },
           'restorationDetails.fixApplied': { $ne: true },
         }).sort({ createdAt: -1 });
@@ -111,8 +111,9 @@ export const statusService = {
           deploymentsCount: 1,
           servicesCount: 1,
           podsCount: 1,
+          configMaps: [],
           deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 0, status: 'Progressing' }],
-          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', endpointCount: 1, ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
           pods: [
             {
               name: `${namespace}-pod-config`,
@@ -138,7 +139,7 @@ export const statusService = {
           servicesCount: 1,
           podsCount: 1,
           deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 1, status: 'Ready' }],
-          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', selector: { app: 'mismatched-label' }, ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', selector: { app: 'mismatched-label' }, endpointCount: 0, ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
           pods: [
             {
               name: `${namespace}-pod-svc`,
@@ -164,8 +165,8 @@ export const statusService = {
           servicesCount: 1,
           podsCount: 1,
           deployments: [{ name: 'web-app', desiredReplicas: 1, availableReplicas: 1, status: 'Ready' }],
-          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
-          ingresses: [{ name: 'web-ingress', tls: [{ secretName: 'nonexistent-tls-secret-failure' }] }],
+          services: [{ name: 'web-service', type: 'ClusterIP', clusterIP: '10.96.14.22', endpointCount: 1, ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }] }],
+          ingresses: [{ name: 'web-ingress', tlsSecretName: 'nonexistent-tls-secret-failure', hosts: ['app.example.com'], tls: [{ secretName: 'nonexistent-tls-secret-failure' }] }],
           pods: [
             {
               name: `${namespace}-pod-tls`,
@@ -191,6 +192,7 @@ export const statusService = {
       deploymentsCount: 1,
       servicesCount: 1,
       podsCount: 1,
+      configMaps: [{ name: 'app-config', exists: true, keys: ['APP_ENV', 'PORT'] }],
       deployments: [
         {
           name: 'web-app',
@@ -204,7 +206,17 @@ export const statusService = {
           name: 'web-service',
           type: 'ClusterIP',
           clusterIP: '10.96.14.22',
+          selector: { app: 'web-app' },
+          endpointCount: 1,
           ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }],
+        },
+      ],
+      ingresses: [
+        {
+          name: 'web-ingress',
+          hosts: ['app.example.com'],
+          tlsSecretName: 'example-tls-secret',
+          tls: [{ secretName: 'example-tls-secret' }],
         },
       ],
       pods: [

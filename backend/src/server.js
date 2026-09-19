@@ -9,7 +9,13 @@ const startServer = async () => {
     // 1. Connect to MongoDB
     await connectDB();
 
-    // 2. Check Kubernetes connectivity (simulation fallback if unreachable)
+    // 2. Ensure standard scenario catalog is seeded and clean
+    const { scenarioService } = await import('./scenarios/scenarioService.js');
+    await scenarioService.seedDefaultScenarios().catch((sErr) => {
+      console.warn('[Server Startup] Scenario seed warning:', sErr.message);
+    });
+
+    // 3. Check Kubernetes connectivity (simulation fallback if unreachable)
     await k8sClientWrapper.verifyConnection().catch(() => {});
 
     // 3. Start HTTP Server

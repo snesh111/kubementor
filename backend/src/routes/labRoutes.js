@@ -16,6 +16,10 @@ import {
   getLabChatHistory,
   explainLabEvidence,
   explainLabConcept,
+  validateLabSolution,
+  getLabValidationHistory,
+  getLabValidationAttempt,
+  getLabPostMortem,
 } from '../controllers/labController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
@@ -46,5 +50,11 @@ router.post('/:labId/ai/chat', authenticate, chatWithLabMentor);
 router.get('/:labId/ai/chat', authenticate, getLabChatHistory);
 router.post('/:labId/ai/explain', authenticate, explainLabEvidence);
 router.post('/:labId/ai/concept', authenticate, explainLabConcept);
+
+// Solution Validation & Guided Post-Mortem
+router.post('/:labId/validate', authenticate, validateLabSolution);
+router.get('/:labId/validation', authenticate, getLabValidationHistory);
+router.get('/:labId/validation/:attemptId', authenticate, getLabValidationAttempt);
+router.get('/:labId/post-mortem/:attemptId', authenticate, getLabPostMortem);
 
 export default router;

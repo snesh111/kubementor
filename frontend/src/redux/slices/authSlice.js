@@ -27,12 +27,36 @@ export const registerThunk = createAsyncThunk(
   }
 );
 
+export const googleLoginThunk = createAsyncThunk(
+  'auth/googleLogin',
+  async (googlePayload, { rejectWithValue }) => {
+    try {
+      const response = await authService.googleLogin(googlePayload);
+      return response.data; // { user, token }
+    } catch (err) {
+      return rejectWithValue(err.message || 'Google authentication failed');
+    }
+  }
+);
+
+export const demoLoginThunk = createAsyncThunk(
+  'auth/demoLogin',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authService.demoLogin();
+      return response.data; // { user, token }
+    } catch (err) {
+      return rejectWithValue(err.message || 'Demo login failed');
+    }
+  }
+);
+
 export const fetchProfileThunk = createAsyncThunk(
   'auth/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
       const response = await authService.getProfile();
-      return response.data.user;
+      return response?.data?.user || response?.user || response?.data;
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to fetch user profile');
     }
@@ -44,7 +68,7 @@ export const updateProfileThunk = createAsyncThunk(
   async (profileData, { rejectWithValue }) => {
     try {
       const response = await authService.updateProfile(profileData);
-      return response.data.user;
+      return response?.data?.user || response?.user || response?.data;
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to update profile');
     }
@@ -109,6 +133,41 @@ export const authSlice = createSlice({
         localStorage.setItem('token', action.payload.token);
       })
       .addCase(registerThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Google Login
+      .addCase(googleLoginThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLoginThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        localStorage.setItem('token', action.payload.token);
+      })
+      .addCase(googleLoginThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+      })
+
+      // Demo Login
+      .addCase(demoLoginThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(demoLoginThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        localStorage.setItem('token', action.payload.token);
+      })
+      .addCase(demoLoginThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

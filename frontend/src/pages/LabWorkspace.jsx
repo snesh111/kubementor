@@ -4,7 +4,10 @@ import WorkspaceHeader from '../components/workspace/WorkspaceHeader';
 import WorkspaceNavPane from '../components/workspace/WorkspaceNavPane';
 import WorkspaceMissionPane from '../components/workspace/WorkspaceMissionPane';
 import WorkspaceLabPane from '../components/workspace/WorkspaceLabPane';
+import ValidationModal from '../components/workspace/ValidationModal';
+import PostMortemModal from '../components/workspace/PostMortemModal';
 import useLabWorkspace, { PROVISIONING_STEPS } from '../hooks/useLabWorkspace';
+import labService from '../services/labService';
 import Button from '../components/common/Button';
 import {
   CheckCircle2,
@@ -36,9 +39,56 @@ export const LabWorkspace = () => {
   const [activeWorkbenchTab, setActiveWorkbenchTab] = useState('terminal');
   const [mobileActiveView, setMobileActiveView] = useState('both'); // 'mission' | 'workbench' | 'both'
 
+  // Solution Validation & Post-Mortem State
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [showPostMortemModal, setShowPostMortemModal] = useState(false);
+  const [postMortemData, setPostMortemData] = useState(null);
+  const [validationHistory, setValidationHistory] = useState([]);
+
   const handleSelectLab = (selectedId, isLive) => {
     if (isLive && selectedId !== labId) {
+      setValidationResult(null);
+      setPostMortemData(null);
+      setShowValidationModal(false);
+      setShowPostMortemModal(false);
       navigate(`/lab/${selectedId}`);
+    }
+  };
+
+  const handleResetLab = async () => {
+    setValidationResult(null);
+    setPostMortemData(null);
+    setShowValidationModal(false);
+    setShowPostMortemModal(false);
+    await resetLab();
+  };
+
+  const handleValidateSolution = async () => {
+    try {
+      setIsValidating(true);
+      setShowValidationModal(true);
+      const res = await labService.validateSolution(labId);
+      const resultData = res.data?.data || res.data || {};
+      setValidationResult(resultData);
+      if (resultData.postMortem) {
+        setPostMortemData(resultData.postMortem);
+      }
+      try {
+        const histRes = await labService.getValidationHistory(labId);
+        setValidationHistory(histRes.data?.data?.history || histRes.data?.history || []);
+      } catch {}
+    } catch (valErr) {
+      setValidationResult({
+        status: 'ERROR',
+        summary: valErr.response?.data?.message || 'Validation request failed. Please retry.',
+        checks: [],
+        evidence: [valErr.message],
+        score: 0,
+      });
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -66,8 +116,11 @@ export const LabWorkspace = () => {
         namespace={session?.namespace}
         isNavCollapsed={isNavCollapsed}
         onToggleNav={() => setIsNavCollapsed(!isNavCollapsed)}
-        onResetLab={session ? resetLab : null}
+        onResetLab={session ? handleResetLab : null}
         isResetting={isResetting}
+        onValidateSolution={session ? handleValidateSolution : null}
+        isValidating={isValidating}
+        validationResult={validationResult}
       />
 
       {/* Mobile/Tablet View Switcher Bar */}
@@ -99,7 +152,7 @@ export const LabWorkspace = () => {
       </div>
 
       {/* 2. MAIN WORKSPACE OR PROVISIONING OVERLAY */}
-      {isProvisioning && !session ? (
+      {error || !session || isProvisioning ? (
         <div className="flex-1 flex items-center justify-center p-6 bg-slate-950 relative overflow-hidden">
           {/* Subtle glowing background aura */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -196,10 +249,19 @@ export const LabWorkspace = () => {
       ) : (
         /* 3. MAIN 3-PANE WORKSPACE BODY */
         <div className="flex-1 flex overflow-hidden">
-          {/* LEFT PANE — PRACTICE NAVIGATION TREE (collapsible) */}
+          {/* LEFT PANE — PRACTICE NAVIGATION ROADMAP & TOPICS */}
           {!isNavCollapsed && (
             <div className="w-56 sm:w-64 shrink-0 h-full transition-all duration-200 ease-in-out">
-              <WorkspaceNavPane activeLabId={labId} onSelectLab={handleSelectLab} />
+              <WorkspaceNavPane
+                activeLabId={labId}
+                session={session}
+                validationResult={validationResult}
+                activeWorkbenchTab={activeWorkbenchTab}
+                onSelectTab={setActiveWorkbenchTab}
+                onSelectLab={handleSelectLab}
+                onValidateSolution={handleValidateSolution}
+                onOpenPostMortem={() => setShowPostMortemModal(true)}
+              />
             </div>
           )}
 
@@ -227,6 +289,29 @@ export const LabWorkspace = () => {
           </div>
         </div>
       )}
+
+      {/* SOLUTION VALIDATION MODAL */}
+      <ValidationModal
+        isOpen={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        isValidating={isValidating}
+        result={validationResult}
+        onRetry={handleValidateSolution}
+        onOpenPostMortem={() => {
+          setShowValidationModal(false);
+          setShowPostMortemModal(true);
+        }}
+        onSwitchToAI={() => setActiveWorkbenchTab('aimentor')}
+        validationHistory={validationHistory}
+      />
+
+      {/* GUIDED POST-MORTEM MODAL */}
+      <PostMortemModal
+        isOpen={showPostMortemModal}
+        onClose={() => setShowPostMortemModal(false)}
+        postMortem={postMortemData}
+        onEditScratchpad={() => setActiveWorkbenchTab('scratchpad')}
+      />
     </div>
   );
 };

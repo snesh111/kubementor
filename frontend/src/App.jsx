@@ -8,6 +8,8 @@ import LabWorkspace from './pages/LabWorkspace';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Profile from './pages/Profile';
+import ProgressDashboard from './pages/ProgressDashboard';
+import BYOASetup from './pages/BYOASetup';
 import Dashboard from './pages/Dashboard';
 import Analyzer from './pages/Analyzer';
 import Deployment from './pages/Deployment';
@@ -38,6 +40,8 @@ export const App = () => {
       >
         <Route path="/" element={<Navigate to="/learn" replace />} />
         <Route path="learn" element={<LearnCatalog />} />
+        <Route path="progress" element={<ProgressDashboard />} />
+        <Route path="byoa" element={<BYOASetup />} />
         <Route path="scenarios" element={<Navigate to="/learn" replace />} />
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />

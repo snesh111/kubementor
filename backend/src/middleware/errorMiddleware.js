@@ -7,6 +7,10 @@ export class ApiError extends Error {
   }
 }
 
+export const catchAsync = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 export const errorHandler = (err, req, res, next) => {
   console.error('[Error Handler]', err);
 

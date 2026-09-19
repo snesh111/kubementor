@@ -30,7 +30,8 @@ export const sanitizeContextData = (data) => {
   if (typeof data === 'object') {
     const sanitizedObj = {};
     for (const [key, value] of Object.entries(data)) {
-      if (SENSITIVE_KEY_REGEX.test(key)) {
+      const isResourceRef = /^(secretName|tlsSecretName|secretRef|configMapName)$/i.test(key) || key.endsWith('SecretName');
+      if (SENSITIVE_KEY_REGEX.test(key) && !isResourceRef) {
         if (typeof value === 'object' && value !== null && (value.name || value.exists !== undefined)) {
           // Preserve safe metadata if it's an object with name/exists
           sanitizedObj[key] = {

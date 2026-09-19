@@ -9,12 +9,20 @@ export const authService = {
     return await api.post('/auth/register', userData);
   },
 
+  googleLogin: async (googlePayload = {}) => {
+    return await api.post('/auth/google', googlePayload);
+  },
+
   getProfile: async () => {
     return await api.get('/auth/profile');
   },
 
   updateProfile: async (profileData) => {
     return await api.put('/auth/profile', profileData);
+  },
+
+  demoLogin: async () => {
+    return await api.post('/auth/demo');
   },
 };
 

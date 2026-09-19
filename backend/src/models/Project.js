@@ -34,6 +34,17 @@ const projectSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    projectType: {
+      type: String,
+      enum: ['GUIDED_LAB', 'BYOA', 'STANDARD'],
+      default: 'GUIDED_LAB',
+      index: true,
+    },
+    isBYOA: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     labId: {
       type: String,
       default: null,

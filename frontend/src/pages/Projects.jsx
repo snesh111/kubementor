@@ -184,7 +184,7 @@ export const Projects = () => {
       {/* Main Content Area */}
       {loading ? (
         <LoadingSpinner label="Fetching project workspace..." size="lg" />
-      ) : projects.length === 0 ? (
+      ) : !Array.isArray(projects) || projects.length === 0 ? (
         /* Empty State */
         <Card className="text-center py-16 px-4">
           <div className="w-16 h-16 bg-slate-800/60 rounded-2xl flex items-center justify-center mx-auto text-slate-400 mb-4 border border-slate-700">
@@ -201,7 +201,7 @@ export const Projects = () => {
       ) : (
         /* Projects Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {(Array.isArray(projects) ? projects : []).map((project) => (
             <Card
               key={project._id}
               className="flex flex-col justify-between hover:border-slate-700 transition-all duration-200 group"

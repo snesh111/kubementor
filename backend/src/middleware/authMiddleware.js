@@ -30,4 +30,6 @@ export const authenticate = async (req, res, next) => {
   }
 };
 
-export default { authenticate };
+export const protect = authenticate;
+
+export default { authenticate, protect };

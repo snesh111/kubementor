@@ -3,6 +3,8 @@ import config from '../config/env.js';
 export class GeminiProvider {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || config.geminiApiKey;
+    this.circuitBreakerUntil = 0;
+    this.lastLoggedCooldown = 0;
   }
 
   /**
@@ -15,8 +17,18 @@ export class GeminiProvider {
     const apiKey = process.env.GEMINI_API_KEY || config.geminiApiKey || this.apiKey;
 
     if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY' || apiKey === 'mock-key' || apiKey.trim().length === 0) {
-      console.warn('[Gemini Provider] GEMINI_API_KEY not set. Using context-grounded fallback reasoning.');
       return { isFallback: true, text: null, provider: 'fallback', error: 'GEMINI_API_KEY not configured' };
+    }
+
+    // Check circuit breaker (Rate limit cooldown active)
+    const now = Date.now();
+    if (now < this.circuitBreakerUntil) {
+      const remainingSec = Math.ceil((this.circuitBreakerUntil - now) / 1000);
+      if (now - this.lastLoggedCooldown > 15000) {
+        console.warn(`[Gemini Provider] Rate-limit circuit breaker active (${remainingSec}s remaining). Serving context-grounded reasoning.`);
+        this.lastLoggedCooldown = now;
+      }
+      return { isFallback: true, error: `Gemini rate limit cooldown active (${remainingSec}s remaining)`, provider: 'fallback' };
     }
 
     try {
@@ -41,7 +53,7 @@ export class GeminiProvider {
       };
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s fast timeout
 
       const response = await fetch(url, {
         method: 'POST',
@@ -54,7 +66,15 @@ export class GeminiProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[Gemini Provider] API Error (${response.status}):`, errorText);
+        
+        // If Rate Limited (429) or Service Unavailable (503), trip circuit breaker for 45 seconds
+        if (response.status === 429 || response.status === 503) {
+          this.circuitBreakerUntil = Date.now() + 45000;
+          console.warn(`[Gemini Provider] API Quota Exceeded (HTTP ${response.status}). Activated 45s circuit breaker fallback.`);
+        } else {
+          console.error(`[Gemini Provider] API Error (${response.status}):`, errorText.slice(0, 300));
+        }
+
         return { isFallback: true, error: `Gemini API returned HTTP ${response.status}`, provider: 'fallback' };
       }
 
@@ -72,10 +92,16 @@ export class GeminiProvider {
         model,
       };
     } catch (err) {
-      console.error('[Gemini Provider] Request failed:', err.message);
+      if (err.name === 'AbortError') {
+        console.warn('[Gemini Provider] Request timed out (4s). Switching to fast fallback.');
+        this.circuitBreakerUntil = Date.now() + 20000; // 20s cooldown on timeout
+      } else {
+        console.error('[Gemini Provider] Request failed:', err.message);
+      }
       return { isFallback: true, error: err.message, provider: 'fallback' };
     }
   }
 }
 
 export default new GeminiProvider();
+

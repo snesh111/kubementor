@@ -16,6 +16,7 @@ export const contextCollector = {
       injectionType: scenarioDoc?.injectionType || 'patch',
       attemptId: scenarioAttempt?._id,
       attemptNumber: scenarioAttempt?.attemptNumber || 1,
+      isFixed: scenarioAttempt?.restorationDetails?.fixApplied === true,
     };
   },
 
@@ -168,6 +169,10 @@ export const contextCollector = {
    */
   collectIngressContext: async (namespace) => {
     if (!k8sClientWrapper.isConnected || !k8sClientWrapper.networkingV1Api) {
+      const liveStatus = await statusService.getSandboxStatus(namespace);
+      if (liveStatus.ingresses) {
+        return liveStatus.ingresses;
+      }
       return [
         {
           name: 'web-ingress',
@@ -195,11 +200,15 @@ export const contextCollector = {
    */
   collectConfigMapContext: async (namespace) => {
     if (!k8sClientWrapper.isConnected || !k8sClientWrapper.coreV1Api) {
+      const liveStatus = await statusService.getSandboxStatus(namespace);
+      if (liveStatus.configMaps !== undefined) {
+        return liveStatus.configMaps;
+      }
       return [
         {
           name: 'app-config',
           exists: true,
-          keys: ['app_env', 'db_host'],
+          keys: ['APP_ENV', 'PORT'],
         },
       ];
     }

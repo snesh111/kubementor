@@ -29,7 +29,10 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const message =
-      error.response?.data?.message || error.message || 'An unexpected error occurred';
+      error.response?.data?.message ||
+      (typeof error.response?.data?.errors === 'string' ? error.response?.data?.errors : null) ||
+      error.message ||
+      'An unexpected error occurred';
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
     }

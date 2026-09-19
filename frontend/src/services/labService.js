@@ -64,6 +64,22 @@ export const labService = {
   aiConcept: async (labId, concept) => {
     return await api.post(`/labs/${labId}/ai/concept`, { concept });
   },
+
+  validateSolution: async (labId) => {
+    return await api.post(`/labs/${labId}/validate`);
+  },
+
+  getValidationHistory: async (labId) => {
+    return await api.get(`/labs/${labId}/validation`);
+  },
+
+  getValidationAttempt: async (labId, attemptId) => {
+    return await api.get(`/labs/${labId}/validation/${attemptId}`);
+  },
+
+  getPostMortem: async (labId, attemptId) => {
+    return await api.get(`/labs/${labId}/post-mortem/${attemptId}`);
+  },
 };
 
 export default labService;

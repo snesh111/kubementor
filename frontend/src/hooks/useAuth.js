@@ -2,6 +2,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
   loginThunk,
   registerThunk,
+  googleLoginThunk,
+  demoLoginThunk,
   fetchProfileThunk,
   updateProfileThunk,
   logout,
@@ -23,6 +25,8 @@ export const useAuth = () => {
     error,
     login: (credentials) => dispatch(loginThunk(credentials)),
     register: (userData) => dispatch(registerThunk(userData)),
+    googleLogin: (googlePayload) => dispatch(googleLoginThunk(googlePayload)),
+    demoLogin: () => dispatch(demoLoginThunk()),
     fetchProfile: () => dispatch(fetchProfileThunk()),
     updateProfile: (profileData) => dispatch(updateProfileThunk(profileData)),
     logout: () => dispatch(logout()),
