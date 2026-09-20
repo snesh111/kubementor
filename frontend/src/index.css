@@ -4,39 +4,73 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-slate-950;
+    @apply bg-[#000000] text-slate-100 selection:bg-emerald-500/40 selection:text-emerald-200 font-sans;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-slate-900/70 backdrop-blur-md border border-slate-800/80 rounded-xl shadow-xl;
+    @apply bg-[#0b0f17]/90 backdrop-blur-md border border-slate-800/80 rounded-2xl shadow-2xl;
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-cyan-500/20 active:scale-[0.98];
+    @apply bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/20 active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2 rounded-lg border border-slate-700 transition-all duration-200 active:scale-[0.98];
+    @apply bg-[#121824] hover:bg-[#1a2333] text-slate-200 font-medium px-5 py-2.5 rounded-xl border border-slate-700/80 transition-all duration-200 active:scale-[0.98];
   }
+}
+
+/* Cosmic Starry Background */
+.stars-bg {
+  background-color: #000000;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.9), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 160px 120px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 210px 190px, rgba(255,255,255,0.6), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 260px 30px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 310px 140px, rgba(255,255,255,0.75), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 350px 60px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 390px 170px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 430px 100px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 470px 210px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 520px 45px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 580px 130px, rgba(255,255,255,0.65), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 600px 240px;
+}
+
+/* Blinking terminal cursor */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: cursorBlink 1s infinite;
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #06090e;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1f2937;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #374151;
 }
+

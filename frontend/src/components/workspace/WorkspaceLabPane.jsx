@@ -5,11 +5,23 @@ import YamlEditorPane from './YamlEditorPane';
 import ScratchpadPane from './ScratchpadPane';
 import AIMentorPane from './AIMentorPane';
 
-export const WorkspaceLabPane = ({ scenario, session, activeTab, onSelectTab }) => {
+export const WorkspaceLabPane = ({
+  scenario,
+  session,
+  activeTab,
+  onSelectTab,
+  splitPercent,
+  onSetSplitPercent,
+}) => {
   return (
-    <div className="w-full h-full bg-slate-950 flex flex-col overflow-hidden select-none border-l border-slate-800">
+    <div className="w-full h-full bg-[#000000] flex flex-col overflow-hidden select-none">
       {/* Tab bar */}
-      <WorkbenchTabs activeTab={activeTab} onSelectTab={onSelectTab} />
+      <WorkbenchTabs
+        activeTab={activeTab}
+        onSelectTab={onSelectTab}
+        splitPercent={splitPercent}
+        onSetSplitPercent={onSetSplitPercent}
+      />
 
       {/* Tab Contents Area */}
       <div className="flex-1 overflow-hidden p-3 flex flex-col select-text">

@@ -189,8 +189,8 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
 
   if (loadingFiles) {
     return (
-      <div className="flex-1 bg-slate-950 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-8 space-y-3">
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      <div className="flex-1 bg-[#000000] rounded-xl border border-[#1e293b]/80 flex flex-col items-center justify-center p-8 space-y-3">
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
         <p className="text-xs font-mono text-slate-400">Loading lab manifests...</p>
       </div>
     );
@@ -198,11 +198,11 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
 
   return (
     <div
-      className="flex-1 bg-slate-950 rounded-xl border border-slate-800 flex flex-col overflow-hidden font-sans text-xs shadow-2xl relative"
+      className="flex-1 bg-[#000000] rounded-xl border border-[#1e293b]/80 flex flex-col overflow-hidden font-sans text-xs shadow-2xl relative"
       onKeyDown={handleKeyDown}
     >
       {/* 1. FILE TABS HEADER */}
-      <div className="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 flex items-center justify-between shrink-0">
+      <div className="bg-[#000000] px-3 py-1.5 border-b border-[#1e293b]/80 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-[70%]">
           {files.map((file) => {
             const fname = file.originalName;
@@ -217,13 +217,13 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
                   setActiveFilename(fname);
                   setValidationError(null);
                 }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 shrink-0 ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-slate-950 text-cyan-400 border border-slate-800 shadow-sm font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    ? 'bg-[#0a0e17] text-emerald-400 border border-emerald-500/30 shadow-sm font-semibold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                <FileCode2 className="w-3.5 h-3.5 text-cyan-400" />
+                <FileCode2 className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{fname}</span>
                 {fileDirty && (
                   <span
@@ -240,7 +240,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
           <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">
             Ctrl+S to save
           </span>
-          <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
             YAML Manifest
           </span>
         </div>
@@ -264,7 +264,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
       )}
 
       {/* 3. MONACO CODE EDITOR BODY */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative bg-[#000000]">
         <Editor
           height="100%"
           language="yaml"
@@ -290,7 +290,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
 
       {/* 4. DEPLOYMENT RESULT OVERLAY / CARD */}
       {deploymentResult && (
-        <div className="border-t border-slate-800 bg-slate-900/95 p-3.5 space-y-2.5 shrink-0 animate-in slide-in-from-bottom-2 duration-300">
+        <div className="border-t border-[#1e293b] bg-[#080d14] p-3.5 space-y-2.5 shrink-0 animate-in slide-in-from-bottom-2 duration-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {deploymentResult.status === 'fixed' ? (
@@ -314,7 +314,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
               <button
                 type="button"
                 onClick={() => onSelectTab && onSelectTab('terminal')}
-                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-mono flex items-center gap-1.5 transition-colors"
+                className="px-2.5 py-1 rounded bg-[#000000] border border-slate-800 hover:bg-slate-900 text-emerald-400 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Terminal className="w-3.5 h-3.5" />
                 <span>Observe in Terminal</span>
@@ -322,7 +322,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
               <button
                 type="button"
                 onClick={() => setDeploymentResult(null)}
-                className="text-slate-400 hover:text-slate-200 text-xs px-1"
+                className="text-slate-400 hover:text-slate-200 text-xs px-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -335,16 +335,16 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[10px] font-mono text-slate-400 border-t border-slate-800/60">
             <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-cyan-400" /> YAML Validated
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" /> YAML Validated
             </span>
             <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-cyan-400" /> RBAC Enforced
+              <ShieldCheck className="w-3 h-3 text-emerald-400" /> RBAC Enforced
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-cyan-400" /> Manifest Applied
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Manifest Applied
             </span>
             <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3 text-cyan-400" /> State Evaluated
+              <Clock className="w-3 h-3 text-emerald-400" /> State Evaluated
             </span>
           </div>
         </div>
@@ -352,8 +352,8 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
 
       {/* 5. UNSAVED CHANGES MODAL PROMPT */}
       {showUnsavedPrompt && (
-        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 max-w-sm w-full space-y-3 shadow-2xl animate-in zoom-in-95 duration-150">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#080d14] border border-[#1e293b] rounded-xl p-4 max-w-sm w-full space-y-3 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2 text-amber-400 font-bold font-mono">
               <AlertCircle className="w-4 h-4" />
               <span>Unsaved Changes</span>
@@ -361,7 +361,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
             <p className="text-xs text-slate-300 leading-relaxed">
               You have modified manifest files that are not saved yet. Would you like to save them before deploying?
             </p>
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1e293b]">
               <Button
                 variant="ghost"
                 size="sm"
@@ -373,7 +373,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
                 variant="primary"
                 size="sm"
                 onClick={handleSaveAndDeploy}
-                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold"
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold"
               >
                 Save & Deploy
               </Button>
@@ -383,11 +383,11 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
       )}
 
       {/* 6. ACTION FOOTER & STATUS BAR */}
-      <div className="p-2.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between shrink-0 font-sans">
+      <div className="p-2.5 bg-[#000000] border-t border-[#1e293b]/80 flex items-center justify-between shrink-0 font-sans">
         <div className="flex items-center gap-2 text-xs">
           {saving ? (
             <span className="flex items-center gap-1 text-slate-400 font-mono">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" /> Saving...
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" /> Saving...
             </span>
           ) : isDirty ? (
             <span className="flex items-center gap-1 text-amber-400 font-mono">
@@ -424,7 +424,7 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
             size="sm"
             onClick={handleDeploy}
             disabled={deploying}
-            className="text-xs font-mono flex items-center gap-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold shadow-lg shadow-cyan-500/20"
+            className="text-xs font-mono flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/20"
           >
             {deploying ? (
               <>

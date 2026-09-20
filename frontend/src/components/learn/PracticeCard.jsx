@@ -71,8 +71,8 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
     <Card
       className={`flex flex-col justify-between transition-all group ${
         isLive
-          ? 'hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-950/20 bg-slate-900/60'
-          : 'opacity-75 bg-slate-950/40 border-slate-800/60'
+          ? 'hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-950/20 bg-[#080d14] border-[#1e293b]'
+          : 'opacity-75 bg-[#05080e]/60 border-slate-850'
       }`}
     >
       <div className="space-y-4">
@@ -96,7 +96,7 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
                   <RotateCcw className="w-3 h-3 text-amber-400" /> Practicing
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900 text-slate-500 border border-slate-800 text-[10px] font-mono">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#000000] text-slate-500 border border-slate-800 text-[10px] font-mono">
                   Not Started
                 </span>
               )
@@ -109,7 +109,7 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
               Live Lab
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-800/60 text-slate-400 border border-slate-700/50 text-[10px] font-mono">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#000000] text-slate-400 border border-slate-800 text-[10px] font-mono">
               <LockKeyhole className="w-3 h-3 text-slate-500" />
               Coming Soon
             </span>
@@ -118,11 +118,11 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
 
         {/* Title & Icon */}
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 shrink-0 group-hover:border-slate-700 transition-colors">
+          <div className="p-2.5 rounded-xl bg-[#000000] border border-slate-800 shrink-0 group-hover:border-emerald-500/30 transition-colors">
             {getIcon(item.iconName)}
           </div>
           <div className="space-y-1 flex-1">
-            <h3 className="text-sm font-bold text-slate-100 group-hover:text-cyan-300 transition-colors leading-snug">
+            <h3 className="text-sm font-bold text-slate-100 group-hover:text-emerald-300 transition-colors leading-snug font-mono">
               {item.name}
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed font-sans line-clamp-2">
@@ -133,7 +133,7 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
 
         {/* Target condition / failure tag */}
         {item.expectedFailure && (
-          <div className="p-2 bg-slate-950/80 rounded-lg border border-slate-800/80 text-[11px] flex items-center justify-between">
+          <div className="p-2 bg-[#000000] rounded-lg border border-slate-800 text-[11px] flex items-center justify-between">
             <span className="text-slate-500 font-mono text-[10px] uppercase">Target Failure:</span>
             <span className="font-mono font-bold text-amber-300 truncate max-w-[160px]">{item.expectedFailure}</span>
           </div>
@@ -141,23 +141,23 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
       </div>
 
       {/* Action Footer */}
-      <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center gap-2">
+      <div className="pt-4 mt-4 border-t border-[#1e293b]/80 flex items-center gap-2">
         {isLive ? (
           <>
             {onViewDetails && (
               <Button
                 variant="secondary"
                 size="sm"
-                className="flex-1 text-xs font-semibold"
+                className="flex-1 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300"
                 onClick={() => onViewDetails(item)}
               >
-                <BookOpen className="w-3.5 h-3.5 text-cyan-400" /> Details
+                <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Details
               </Button>
             )}
             <Button
               variant="primary"
               size="sm"
-              className="flex-1 text-xs font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md shadow-cyan-950/40"
+              className="flex-1 text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-md shadow-emerald-950/40"
               onClick={() => onStartLab(item)}
             >
               <Play className="w-3.5 h-3.5 fill-current" /> Start Lab
@@ -168,7 +168,7 @@ export const PracticeCard = ({ item, masteryState, onStartLab, onViewDetails }) 
             variant="secondary"
             size="sm"
             disabled
-            className="w-full text-xs text-slate-500 border-slate-800 bg-slate-950/60 cursor-not-allowed"
+            className="w-full text-xs text-slate-500 border-slate-800 bg-[#000000] cursor-not-allowed"
           >
             <LockKeyhole className="w-3.5 h-3.5" /> Practice Available in Next Update
           </Button>

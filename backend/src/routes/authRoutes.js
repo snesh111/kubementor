@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   googleLoginUser,
+  githubLoginUser,
   demoLoginUser,
   getProfile,
   updateProfile,
@@ -15,6 +16,7 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/google', googleLoginUser);
+router.post('/github', githubLoginUser);
 router.post('/demo', demoLoginUser);
 
 // Protected routes

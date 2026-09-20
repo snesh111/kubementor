@@ -73,7 +73,6 @@ export const authService = {
     let userAvatar = avatar;
     let userGoogleId = googleId;
 
-    // Decode Google JWT ID token payload if provided from GSI
     if (credential) {
       try {
         const parts = credential.split('.');
@@ -89,18 +88,13 @@ export const authService = {
       }
     }
 
-    // Default fallback demo Google credentials if empty
     if (!userEmail) {
-      userEmail = 'google.engineer@kubementor.io';
-      userName = userName || 'Google DevOps Engineer';
-      userAvatar = userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
-      userGoogleId = userGoogleId || 'google_oauth_default_user';
+      throw new ApiError('Google authentication failed: Verified email was not provided', 400);
     }
 
     userEmail = userEmail.toLowerCase().trim();
     userName = userName ? userName.trim() : userEmail.split('@')[0];
 
-    // Find existing user
     let user = await User.findOne({
       $or: [
         ...(userGoogleId ? [{ googleId: userGoogleId }] : []),
@@ -128,6 +122,135 @@ export const authService = {
         googleId: userGoogleId,
         authProvider: 'google',
         avatar: userAvatar || undefined,
+      });
+    }
+
+    const token = generateToken({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+    });
+
+    return {
+      user: user.toResponseObject(),
+      token,
+    };
+  },
+
+  /**
+   * Authenticate / Register via GitHub OAuth
+   * @param {Object} githubPayload - { code, email, name, avatar, githubId }
+   * @returns {Object} { user, token }
+   */
+  githubAuth: async ({ code, email, name, avatar, githubId }) => {
+    let userEmail = email;
+    let userName = name;
+    let userAvatar = avatar;
+    let userGithubId = githubId;
+
+    // 1. Real GitHub OAuth Code-for-Token Exchange if code provided
+    if (code) {
+      if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+        throw new ApiError(
+          'GitHub OAuth is not fully configured on the server. Please add GITHUB_CLIENT_SECRET to backend/.env',
+          400
+        );
+      }
+
+      try {
+        const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            client_id: process.env.GITHUB_CLIENT_ID,
+            client_secret: process.env.GITHUB_CLIENT_SECRET,
+            code,
+          }),
+        });
+
+        const tokenData = await tokenRes.json();
+        if (tokenData.error) {
+          throw new ApiError(
+            `GitHub OAuth error: ${tokenData.error_description || tokenData.error}`,
+            400
+          );
+        }
+
+        if (tokenData.access_token) {
+          // Fetch authenticated GitHub user
+          const userRes = await fetch('https://api.github.com/user', {
+            headers: {
+              Authorization: `Bearer ${tokenData.access_token}`,
+              'User-Agent': 'KubeMentor-App',
+            },
+          });
+          const ghUser = await userRes.json();
+          userName = ghUser.name || ghUser.login || userName;
+          userAvatar = ghUser.avatar_url || userAvatar;
+          userGithubId = String(ghUser.id || userGithubId);
+          userEmail = ghUser.email;
+
+          // Fetch verified email if user email is private
+          if (!userEmail) {
+            try {
+              const emailsRes = await fetch('https://api.github.com/user/emails', {
+                headers: {
+                  Authorization: `Bearer ${tokenData.access_token}`,
+                  'User-Agent': 'KubeMentor-App',
+                },
+              });
+              const emails = await emailsRes.json();
+              if (Array.isArray(emails)) {
+                const primaryEmail = emails.find((e) => e.primary && e.verified) || emails[0];
+                if (primaryEmail?.email) {
+                  userEmail = primaryEmail.email;
+                }
+              }
+            } catch (emailErr) {
+              console.warn('[authService] GitHub email fetch warning:', emailErr.message);
+            }
+          }
+
+          // If still private, use GitHub's standard noreply alias for the user
+          if (!userEmail && ghUser.login) {
+            userEmail = `${ghUser.login}@users.noreply.github.com`;
+          }
+        }
+      } catch (err) {
+        if (err instanceof ApiError) throw err;
+        console.warn('[authService] GitHub code exchange error:', err.message);
+        throw new ApiError(`GitHub authentication exchange failed: ${err.message}`, 400);
+      }
+    }
+
+    if (!userEmail) {
+      throw new ApiError('GitHub authentication failed: Verified email was not provided by GitHub', 400);
+    }
+
+    userEmail = userEmail.toLowerCase().trim();
+    userName = userName ? userName.trim() : userEmail.split('@')[0];
+
+    let user = await User.findOne({ email: userEmail });
+
+    if (user) {
+      if (userAvatar && (!user.avatar || user.avatar.includes('unsplash'))) {
+        user.avatar = userAvatar;
+      }
+      if (!user.authProvider || user.authProvider === 'local') {
+        user.authProvider = 'github';
+      }
+      await user.save();
+    } else {
+      const randomPassword = `GH_${Math.random().toString(36).slice(-10)}_${Date.now()}!`;
+      user = await User.create({
+        name: userName,
+        email: userEmail,
+        password: randomPassword,
+        authProvider: 'github',
+        avatar: userAvatar,
       });
     }
 
@@ -191,7 +314,7 @@ export const authService = {
   updateUserProfile: async (userId, { name, email, avatar, password }) => {
     const user = await User.findById(userId);
     if (!user) {
-      throw new ApiError('User not found', 404);
+      throw new ApiError('User profile not found', 404);
     }
 
     if (email && email.toLowerCase().trim() !== user.email) {
@@ -204,7 +327,7 @@ export const authService = {
 
     if (name) user.name = name.trim();
     if (avatar) user.avatar = avatar;
-    if (password) user.password = password; // pre('save') hook will hash this
+    if (password) user.password = password;
 
     await user.save();
     return user.toResponseObject();

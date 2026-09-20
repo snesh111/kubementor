@@ -13,6 +13,10 @@ export const authService = {
     return await api.post('/auth/google', googlePayload);
   },
 
+  githubLogin: async (githubPayload = {}) => {
+    return await api.post('/auth/github', githubPayload);
+  },
+
   getProfile: async () => {
     return await api.get('/auth/profile');
   },

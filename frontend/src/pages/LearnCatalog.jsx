@@ -38,8 +38,10 @@ import PracticeCategory from '../components/learn/PracticeCategory';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import TypewriterWordRotator from '../components/common/TypewriterWordRotator';
+import KubeMentorBrandLogo from '../components/common/KubeMentorBrandLogo';
+import useAuth from '../hooks/useAuth';
 
-// 1. LIVE FLAGSHIP TROUBLESHOOTING SCENARIOS
 const LIVE_TROUBLESHOOTING_CATEGORY = {
   categoryId: 'troubleshooting',
   categoryName: 'Troubleshooting Labs',
@@ -220,6 +222,7 @@ const FULL_ORDERED_CATALOG = [
 
 export const LearnCatalog = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const labsSectionRef = useRef(null);
   const [catalog, setCatalog] = useState(FULL_ORDERED_CATALOG);
   const [masteryMap, setMasteryMap] = useState({});
@@ -233,13 +236,15 @@ export const LearnCatalog = () => {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const [res, progSummary, scList] = await Promise.all([
-          labService.getCatalog(),
-          progressService.getUserProgress().catch(() => null),
-          progressService.getScenarioMasteryList().catch(() => []),
-        ]);
+        const promises = [labService.getCatalog()];
+        if (isAuthenticated) {
+          promises.push(progressService.getUserProgress().catch(() => null));
+          promises.push(progressService.getScenarioMasteryList().catch(() => []));
+        }
 
-        if (res.data?.catalog && Array.isArray(res.data.catalog) && res.data.catalog.length > 0) {
+        const [res, progSummary, scList] = await Promise.all(promises);
+
+        if (res?.data?.catalog && Array.isArray(res.data.catalog) && res.data.catalog.length > 0) {
           const liveCats = res.data.catalog.filter((c) => c.categoryId === 'troubleshooting');
           const otherCats = res.data.catalog.filter((c) => c.categoryId !== 'troubleshooting');
           setCatalog([...liveCats, ...otherCats]);
@@ -262,7 +267,7 @@ export const LearnCatalog = () => {
     };
 
     fetchCatalog();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleStartLab = (item) => {
     navigate(`/lab/${item.scenarioId || item.slug || item.id}`);
@@ -312,62 +317,87 @@ export const LearnCatalog = () => {
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto pb-16 font-sans">
-      {/* 1. HERO SECTION MATCHING ESCBASH.COM COSMIC DESIGN */}
-      <div className="relative pt-8 pb-12 flex flex-col items-center text-center px-4 overflow-hidden">
+      {/* 1. HERO SECTION - THREE LAYER STRUCTURE WITH COSMIC THOR AESTHETICS */}
+      <div className="relative pt-6 pb-12 flex flex-col items-center text-center px-4 overflow-hidden">
         {/* Subtle background radial glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[380px] bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
 
-        {/* Central Esc-Bash Style Brand Pill */}
-        <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121926] border border-slate-700/80 shadow-lg">
-          <span className="text-slate-400 font-mono text-xs font-bold">&gt;_</span>
-          <span className="text-emerald-400 font-mono text-xs font-bold tracking-tight">Kube</span>
-          <span className="text-white font-mono text-xs font-bold tracking-tight">Mentor</span>
+        {/* LAYER 1: CREATIVE 3D MECHANICAL KEYCAP BRAND LOGO (Matching escbash style) */}
+        <div className="flex items-center justify-center mb-6">
+          <KubeMentorBrandLogo size="lg" showText={true} />
         </div>
 
-        {/* Green Monospace Tagline */}
-        <p className="text-[11px] sm:text-xs font-mono font-bold uppercase tracking-[0.25em] text-emerald-400 mb-4">
-          HANDS-ON SIMULATION + REAL KUBERNETES LABS
+        {/* LAYER 2: GREEN MONOSPACE TAGLINE */}
+        <p className="text-[11px] sm:text-xs font-mono font-bold uppercase tracking-[0.25em] text-[#10b981] mb-5">
+          AI-POWERED SIMULATION &bull; REAL CLUSTER OUTAGES &bull; LIVE SANDBOX
         </p>
 
-        {/* Massive Bold Headline with Glowing Accent */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight max-w-4xl leading-[1.15] mb-6">
-          The best platform to simulate and practice{' '}
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-            Kubernetes
-          </span>
+        {/* LAYER 3: STRUCTURED BOLD 2-LINE HEADLINE WITH ROTATING WORD */}
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight max-w-5xl mx-auto leading-[1.12] mb-5 text-center">
+          The best platform to simulate <br />
+          and practice <TypewriterWordRotator />
         </h1>
 
-        {/* Concise Description Subtitle */}
-        <p className="text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed mb-8">
-          KubeMentor spins up an isolated sandbox in seconds. Learners and engineers investigate live failure telemetry, edit YAML manifests, use interactive CLI terminals, and get instant authoritative feedback.
+        {/* Short, To-The-Point Subtitle */}
+        <p className="text-sm sm:text-base md:text-lg text-slate-300/90 max-w-2xl mx-auto leading-relaxed mb-8 text-center font-normal">
+          Spin up live sandboxes in seconds. Run real kubectl commands, debug cluster outages, and verify fixes with instant AI feedback.
         </p>
 
+        {/* 4 Clean Feature Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-9 text-xs font-mono text-slate-300 max-w-3xl">
+          <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-emerald-500/40 transition-colors">
+            <span className="text-emerald-400 font-bold">⚡</span>
+            <span>10s Live Sandbox</span>
+          </div>
+          <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-teal-500/40 transition-colors">
+            <span className="text-teal-400">💻</span>
+            <span>Real kubectl &amp; Logs</span>
+          </div>
+          <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-cyan-500/40 transition-colors">
+            <span className="text-cyan-400">🛠️</span>
+            <span>Fix Broken Manifests</span>
+          </div>
+          <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-purple-500/40 transition-colors">
+            <span className="text-purple-400">🤖</span>
+            <span>Instant AI Mentor</span>
+          </div>
+        </div>
+
         {/* Dual Hero CTA Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-14">
           <button
             onClick={scrollToLabs}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2 active:scale-95"
+            className="px-7 py-3.5 rounded-full bg-[#10b981] hover:bg-[#059669] text-black font-black text-xs sm:text-sm transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2 active:scale-95 cursor-pointer"
           >
-            <Play className="w-4 h-4 fill-current" /> Learn your first skill
+            <span>Start Practice Lab</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
 
           <button
-            onClick={() => navigate('/byoa')}
-            className="px-6 py-3 rounded-xl bg-[#111722] hover:bg-[#161f2e] text-white border border-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 active:scale-95"
+            onClick={() => {
+              const demoCard = document.getElementById('live-demo-card');
+              if (demoCard) {
+                demoCard.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                scrollToLabs();
+              }
+            }}
+            className="px-7 py-3.5 rounded-full bg-[#0d121c] hover:bg-[#131a26] text-white border border-slate-700/80 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 active:scale-95 cursor-pointer shadow-sm hover:border-slate-500"
           >
-            <Sparkles className="w-4 h-4 text-purple-400" /> Test Custom App (BYOA)
+            <Play className="w-3.5 h-3.5 fill-current text-slate-400" />
+            <span>Watch a real run</span>
           </button>
         </div>
 
         {/* "SEE A LAB IN ACTION" Small Green Label */}
-        <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-emerald-500/80 mb-4">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-[#10b981] mb-4">
           SEE A LAB IN ACTION
         </span>
 
         {/* Interactive Live Simulator Preview Card */}
-        <div className="w-full max-w-4xl rounded-2xl bg-[#0a0d14] border border-slate-800 shadow-2xl overflow-hidden text-left">
+        <div id="live-demo-card" className="w-full max-w-4xl rounded-2xl bg-[#090d14] border border-[#1e293b] shadow-2xl overflow-hidden text-left hover:border-emerald-500/40 transition-all">
           {/* Mock Window Bar */}
-          <div className="px-4 py-2.5 bg-[#0e131d] border-b border-slate-800 flex items-center justify-between">
+          <div className="px-4 py-3 bg-[#0d121c] border-b border-[#1e293b] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
@@ -375,51 +405,67 @@ export const LearnCatalog = () => {
               <span className="text-[11px] font-mono text-slate-400 ml-2">kubementor live demo</span>
             </div>
             <div className="flex items-center gap-2 text-[10px] font-mono">
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
-                VALIDATE
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
+                LIVE SANDBOX
               </span>
             </div>
           </div>
 
           {/* 3-Column Preview Interior */}
-          <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
-            {/* Left Column: Roadmap */}
-            <div className="p-3 rounded-xl bg-[#070a10] border border-slate-800/80 space-y-2">
+          <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-3.5 font-mono text-xs">
+            {/* Left Column: Investigation Track */}
+            <div className="p-3.5 rounded-xl bg-[#06090f] border border-slate-800/80 space-y-2">
               <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
                 01 | INVESTIGATION
               </span>
-              <div className="text-xs text-slate-200 font-bold">CrashLoopBackOff</div>
+              <div className="text-xs text-slate-200 font-bold">CrashLoopBackOff Exit 1</div>
               <div className="text-[10px] text-slate-500">Inspect pod exit code 1 &amp; crash logs</div>
               <div className="pt-2">
                 <span className="inline-block w-full py-1 text-center rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                  ● 100% Deterministic Engine
+                  ● Real VM Environment
                 </span>
               </div>
             </div>
 
             {/* Middle Column: Terminal Snippet */}
-            <div className="p-3 rounded-xl bg-[#070a10] border border-slate-800/80 text-[11px] space-y-1">
+            <div className="p-3.5 rounded-xl bg-[#06090f] border border-slate-800/80 text-[11px] space-y-1.5">
               <div className="text-slate-500">$ kubectl get pods</div>
               <div className="text-rose-400">web-app-crash 0/1 CrashLoopBackOff (4)</div>
               <div className="text-slate-500 mt-2">$ kubectl logs web-app-crash</div>
-              <div className="text-amber-300">[FATAL] Missing required APP_ENV variable</div>
+              <div className="text-amber-300">[FATAL] Missing APP_ENV variable</div>
             </div>
 
             {/* Right Column: Fix & AI Assistance */}
-            <div className="p-3 rounded-xl bg-[#070a10] border border-slate-800/80 text-[11px] space-y-2">
-              <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">
+            <div className="p-3.5 rounded-xl bg-[#06090f] border border-slate-800/80 text-[11px] space-y-2">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block">
                 AI MENTOR HINT
               </span>
               <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                "The container terminates with Exit Code 1. Fix the environment spec in Monaco YAML editor and apply."
+                "The container terminates with Exit Code 1. Fix the environment spec in YAML editor and apply."
               </p>
-              <div className="flex items-center gap-1 text-emerald-400 text-[10px] font-bold font-mono">
+              <div className="flex items-center gap-1 text-emerald-400 text-[10px] font-bold font-mono pt-1">
                 <Check className="w-3.5 h-3.5" /> Solution Verified: PASS (100%)
               </div>
             </div>
           </div>
+
+          {/* Interactive footer bar */}
+          <div className="px-4 py-2.5 bg-[#0b0f17] border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+            <span className="text-slate-400 font-mono text-[11px] flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Realistic Linux cgroup &amp; kubelet crash simulation engine</span>
+            </span>
+            <button
+              onClick={() => navigate('/lab/crash-loop-backoff')}
+              className="text-emerald-400 hover:text-emerald-300 font-mono font-bold text-[11px] flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              <span>Launch This Scenario</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
+
 
       {/* 2. BRING YOUR OWN APPLICATION (BYOA) PLAYGROUND BANNER */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#0d121f] to-slate-950 border border-purple-500/30 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">

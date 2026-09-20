@@ -48,6 +48,16 @@ export const googleLoginUser = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    GitHub OAuth Sign-In / Sign-Up
+ * @route   POST /api/v1/auth/github
+ * @access  Public
+ */
+export const githubLoginUser = asyncHandler(async (req, res) => {
+  const result = await authService.githubAuth(req.body || {});
+  return ApiResponse.success(res, 'Logged in with GitHub account', result, 200);
+});
+
+/**
   * @desc    One-click demo evaluation login
   * @route   POST /api/v1/auth/demo
   * @access  Public
@@ -86,6 +96,7 @@ export default {
   registerUser,
   loginUser,
   googleLoginUser,
+  githubLoginUser,
   demoLoginUser,
   getProfile,
   updateProfile,

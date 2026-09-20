@@ -8,7 +8,7 @@ export const loginThunk = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
-      return response.data; // { user, token }
+      return response.data;
     } catch (err) {
       return rejectWithValue(err.message || 'Login failed');
     }
@@ -20,7 +20,7 @@ export const registerThunk = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const response = await authService.register(userData);
-      return response.data; // { user, token }
+      return response.data;
     } catch (err) {
       return rejectWithValue(err.message || 'Registration failed');
     }
@@ -32,9 +32,21 @@ export const googleLoginThunk = createAsyncThunk(
   async (googlePayload, { rejectWithValue }) => {
     try {
       const response = await authService.googleLogin(googlePayload);
-      return response.data; // { user, token }
+      return response.data;
     } catch (err) {
       return rejectWithValue(err.message || 'Google authentication failed');
+    }
+  }
+);
+
+export const githubLoginThunk = createAsyncThunk(
+  'auth/githubLogin',
+  async (githubPayload, { rejectWithValue }) => {
+    try {
+      const response = await authService.githubLogin(githubPayload);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.message || 'GitHub authentication failed');
     }
   }
 );
@@ -44,7 +56,7 @@ export const demoLoginThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await authService.demoLogin();
-      return response.data; // { user, token }
+      return response.data;
     } catch (err) {
       return rejectWithValue(err.message || 'Demo login failed');
     }
@@ -80,7 +92,7 @@ const initialState = {
   token: initialToken,
   isAuthenticated: !!initialToken,
   loading: false,
-  isInitializing: !!initialToken, // true while initial token validation occurs
+  isInitializing: !!initialToken,
   error: null,
 };
 
@@ -150,6 +162,24 @@ export const authSlice = createSlice({
         localStorage.setItem('token', action.payload.token);
       })
       .addCase(googleLoginThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+      })
+
+      // GitHub Login
+      .addCase(githubLoginThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(githubLoginThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        localStorage.setItem('token', action.payload.token);
+      })
+      .addCase(githubLoginThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.isAuthenticated = false;

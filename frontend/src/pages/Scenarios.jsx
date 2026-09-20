@@ -459,7 +459,7 @@ export const Scenarios = () => {
             Learn Kubernetes Failures by Diagnosing & Fixing Them Live
           </h1>
           <p className="text-sm text-slate-300 leading-relaxed">
-            Inspired by hands-on labs like Katacoda & Escbash. Master why and when errors like{' '}
+            Hands-on interactive learning labs. Master why and when errors like{' '}
             <span className="font-mono text-cyan-300">CrashLoopBackOff</span>,{' '}
             <span className="font-mono text-amber-300">ImagePullBackOff</span>, and{' '}
             <span className="font-mono text-rose-300">OOMKilled</span> occur, study step-by-step diagnostic playbooks, and simulate solutions with AI Mentor assistance.

@@ -25,8 +25,8 @@ import { authenticate } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Protected catalog route
-router.get('/catalog', authenticate, getPracticeCatalog);
+// Public practice scenarios catalog route
+router.get('/catalog', getPracticeCatalog);
 
 // Automated Lab Session Management
 router.post('/:labId/start', authenticate, startLabSession);

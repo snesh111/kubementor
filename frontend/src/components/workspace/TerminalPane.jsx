@@ -100,12 +100,12 @@ export const TerminalPane = ({ session }) => {
       fontSize: 12,
       lineHeight: 1.25,
       theme: {
-        background: '#020617', // slate-950
+        background: '#000000', // Pure pitch black
         foreground: '#e2e8f0', // slate-200
-        cursor: '#38bdf8', // sky-400
-        cursorAccent: '#020617',
-        selectionBackground: '#334155',
-        black: '#0f172a',
+        cursor: '#10b981', // emerald-400
+        cursorAccent: '#000000',
+        selectionBackground: '#1e293b',
+        black: '#000000',
         red: '#f43f5e',
         green: '#10b981',
         yellow: '#f59e0b',
@@ -113,7 +113,7 @@ export const TerminalPane = ({ session }) => {
         magenta: '#d946ef',
         cyan: '#06b6d4',
         white: '#f8fafc',
-        brightBlack: '#475569',
+        brightBlack: '#334155',
         brightRed: '#fb7185',
         brightGreen: '#34d399',
         brightYellow: '#fbbf24',
@@ -181,9 +181,9 @@ export const TerminalPane = ({ session }) => {
   };
 
   return (
-    <div className="flex-1 bg-slate-950 rounded-xl border border-slate-800 flex flex-col overflow-hidden font-mono text-xs shadow-2xl">
+    <div className="flex-1 bg-[#000000] rounded-xl border border-[#1e293b]/80 flex flex-col overflow-hidden font-mono text-xs shadow-2xl">
       {/* Terminal Header Bar */}
-      <div className="bg-slate-900 px-3 py-2 border-b border-slate-800 flex items-center justify-between shrink-0 select-none">
+      <div className="bg-[#000000] px-3 py-2 border-b border-[#1e293b]/80 flex items-center justify-between shrink-0 select-none">
         <div className="flex items-center gap-2">
           {/* macOS style dots */}
           <div className="flex gap-1.5">
@@ -193,7 +193,7 @@ export const TerminalPane = ({ session }) => {
           </div>
 
           <span className="text-[11px] text-slate-300 font-sans ml-2 flex items-center gap-1.5 font-semibold">
-            <TerminalIcon className="w-3.5 h-3.5 text-cyan-400" />
+            <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
             Interactive Linux Shell (kubectl CLI)
           </span>
 
@@ -227,7 +227,7 @@ export const TerminalPane = ({ session }) => {
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           {sessionMeta.namespace && (
-            <span className="hidden md:inline-block text-[10px] font-mono text-cyan-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+            <span className="hidden md:inline-block text-[10px] font-mono text-emerald-400 bg-[#080d14] px-2 py-0.5 rounded border border-slate-850">
               ns: {sessionMeta.namespace}
             </span>
           )}
@@ -236,7 +236,7 @@ export const TerminalPane = ({ session }) => {
             type="button"
             onClick={handleClear}
             title="Clear Terminal Screen (Ctrl+L)"
-            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -245,7 +245,7 @@ export const TerminalPane = ({ session }) => {
             type="button"
             onClick={connectWebSocket}
             title="Reconnect Terminal Session"
-            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors cursor-pointer"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${connectionStatus === 'connecting' ? 'animate-spin' : ''}`} />
           </button>
@@ -253,19 +253,19 @@ export const TerminalPane = ({ session }) => {
       </div>
 
       {/* xterm.js DOM Mount Surface */}
-      <div className="flex-1 p-2 bg-slate-950 overflow-hidden relative">
+      <div className="flex-1 p-2 bg-[#000000] overflow-hidden relative">
         <div ref={terminalRef} className="w-full h-full" />
       </div>
 
       {/* Terminal Footer Bar */}
-      <div className="p-2 bg-slate-900/90 border-t border-slate-800 text-[11px] font-sans text-slate-400 flex items-center justify-between shrink-0 select-none">
-        <span className="flex items-center gap-1.5 text-cyan-300 font-mono text-[10px]">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+      <div className="p-2 bg-[#000000] border-t border-[#1e293b]/80 text-[11px] font-sans text-slate-400 flex items-center justify-between shrink-0 select-none">
+        <span className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px]">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
           {sessionMeta.mode === 'kubernetes'
             ? 'Live Kubernetes Cluster Shell (Strict Namespace RBAC Active)'
             : 'Interactive Simulation Sandbox (Telemetry Grounded)'}
         </span>
-        <span className="text-[10px] font-mono text-slate-500">PART 4 TERMINAL</span>
+        <span className="text-[10px] font-mono text-slate-500">KUBEMENTOR LIVE SHELL</span>
       </div>
     </div>
   );
