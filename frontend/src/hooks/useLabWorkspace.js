@@ -11,46 +11,48 @@ export const PROVISIONING_STEPS = [
 
 export const useLabWorkspace = (labId) => {
   const [session, setSession] = useState(null);
-  const [isProvisioning, setIsProvisioning] = useState(true);
+  const [isLabStarted, setIsLabStarted] = useState(false);
+  const [isStartingLab, setIsStartingLab] = useState(false);
+  const [isProvisioning, setIsProvisioning] = useState(false);
   const [provisioningStep, setProvisioningStep] = useState(1);
   const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState(null);
   const inFlightRef = useRef(false);
 
-  const startOrResumeLab = useCallback(async () => {
+  // Initial load: Fetch existing session metadata if available without auto-starting timer/terminal
+  useEffect(() => {
+    let isMounted = true;
+    const loadSessionPreview = async () => {
+      if (!labId) return;
+      try {
+        const res = await labService.getLabSession(labId);
+        const existingSession =
+          res?.data?.session || res?.session || res?.data?.data?.session || (res?.labId ? res : null);
+        if (isMounted && existingSession) {
+          setSession(existingSession);
+        }
+      } catch (err) {
+        // No session yet; session will be initialized on Start Lab
+      }
+    };
+
+    setIsLabStarted(false);
+    loadSessionPreview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [labId]);
+
+  // Explicit action triggered when learner clicks "Start Lab"
+  const startLabAction = useCallback(async () => {
     if (!labId || inFlightRef.current) return;
     inFlightRef.current = true;
 
-    setIsProvisioning(true);
+    setIsStartingLab(true);
     setError(null);
-    setProvisioningStep(1);
-
-    // Simulate animated step progression while backend orchestrates
-    const stepTimer1 = setTimeout(() => setProvisioningStep(2), 400);
-    const stepTimer2 = setTimeout(() => setProvisioningStep(3), 900);
-    const stepTimer3 = setTimeout(() => setProvisioningStep(4), 1500);
 
     try {
-      // 1. Try to fetch existing active session
-      let res = null;
-      try {
-        res = await labService.getLabSession(labId);
-      } catch (getErr) {
-        // No active session found, start new lab
-      }
-
-      const existingSession =
-        res?.data?.session || res?.session || res?.data?.data?.session || (res?.labId ? res : null);
-
-      if (existingSession) {
-        setProvisioningStep(5);
-        setSession(existingSession);
-        setIsProvisioning(false);
-        inFlightRef.current = false;
-        return;
-      }
-
-      // 2. Provision new lab session
       const startRes = await labService.startLab(labId);
       const newSession =
         startRes?.data?.session ||
@@ -59,24 +61,17 @@ export const useLabWorkspace = (labId) => {
         (startRes?.labId ? startRes : null);
 
       if (newSession) {
-        setProvisioningStep(5);
-        setTimeout(() => {
-          setSession(newSession);
-          setIsProvisioning(false);
-          inFlightRef.current = false;
-        }, 300);
+        setSession(newSession);
+        setIsLabStarted(true);
       } else {
         throw new Error('Could not parse lab session response.');
       }
     } catch (err) {
-      console.error('[useLabWorkspace] Provisioning error:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to provision lab workspace.');
-      setIsProvisioning(false);
-      inFlightRef.current = false;
+      console.error('[useLabWorkspace] Start Lab error:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to start lab environment.');
     } finally {
-      clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
-      clearTimeout(stepTimer3);
+      setIsStartingLab(false);
+      inFlightRef.current = false;
     }
   }, [labId]);
 
@@ -92,6 +87,7 @@ export const useLabWorkspace = (labId) => {
         res?.data?.session || res?.session || res?.data?.data?.session || (res?.labId ? res : null);
       if (resetSession) {
         setSession(resetSession);
+        setIsLabStarted(true);
       }
     } catch (err) {
       console.error('[useLabWorkspace] Reset error:', err);
@@ -101,19 +97,19 @@ export const useLabWorkspace = (labId) => {
     }
   }, [labId]);
 
-  useEffect(() => {
-    startOrResumeLab();
-  }, [startOrResumeLab]);
-
   return {
     session,
+    isLabStarted,
+    isStartingLab,
     isProvisioning,
     provisioningStep,
     isResetting,
     error,
-    startOrResumeLab,
+    startLabAction,
+    startOrResumeLab: startLabAction,
     resetLab,
     setSession,
+    setIsLabStarted,
   };
 };
 

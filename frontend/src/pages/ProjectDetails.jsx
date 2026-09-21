@@ -612,27 +612,27 @@ export const ProjectDetails = () => {
     if (status === 'running') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 🟢 Running
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Running
         </span>
       );
     }
     if (status === 'deploying' || status === 'pending') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> 🟡 Deploying
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Deploying
         </span>
       );
     }
     if (status === 'failed') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 text-xs font-mono font-bold">
-          <span className="w-2 h-2 rounded-full bg-rose-400"></span> 🔴 Failed
+          <span className="w-2 h-2 rounded-full bg-rose-400"></span> Failed
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/30 text-xs font-mono font-bold">
-        <span className="w-2 h-2 rounded-full bg-slate-500"></span> ⚪ Stopped
+        <span className="w-2 h-2 rounded-full bg-slate-500"></span> Stopped
       </span>
     );
   };
@@ -642,20 +642,20 @@ export const ProjectDetails = () => {
     if (status === 'PASS') {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold">
-          <CheckSquare className="w-3.5 h-3.5" /> ✅ PASSED
+          <CheckSquare className="w-3.5 h-3.5" /> PASSED
         </span>
       );
     }
     if (status === 'PARTIAL') {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold">
-          <AlertOctagon className="w-3.5 h-3.5" /> 🟡 PARTIAL
+          <AlertOctagon className="w-3.5 h-3.5" /> PARTIAL
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 text-xs font-mono font-bold">
-        <XCircle className="w-3.5 h-3.5" /> ❌ FAILED
+        <XCircle className="w-3.5 h-3.5" /> FAILED
       </span>
     );
   };
@@ -975,21 +975,21 @@ export const ProjectDetails = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 font-mono text-xs">
                   <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-emerald-400 font-bold block mb-1">✅ Fixed Issues ({analysisComp.fixedCount})</span>
+                    <span className="text-[10px] text-emerald-400 font-bold block mb-1">Fixed Issues ({analysisComp.fixedCount})</span>
                     {analysisComp.fixedIssues.map((f, i) => (
                       <div key={i} className="text-slate-300 truncate text-[11px]">• {f.title}</div>
                     ))}
                     {analysisComp.fixedCount === 0 && <span className="text-slate-500 text-[11px]">None</span>}
                   </div>
                   <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-rose-400 font-bold block mb-1">❌ Still Present ({analysisComp.remainingCount})</span>
+                    <span className="text-[10px] text-rose-400 font-bold block mb-1">Still Present ({analysisComp.remainingCount})</span>
                     {analysisComp.remainingIssues.map((f, i) => (
                       <div key={i} className="text-slate-300 truncate text-[11px]">• {f.title}</div>
                     ))}
                     {analysisComp.remainingCount === 0 && <span className="text-slate-500 text-[11px]">None</span>}
                   </div>
                   <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-amber-400 font-bold block mb-1">⚠️ New Issues ({analysisComp.newCount})</span>
+                    <span className="text-[10px] text-amber-400 font-bold block mb-1">New Issues ({analysisComp.newCount})</span>
                     {analysisComp.newIssues.map((f, i) => (
                       <div key={i} className="text-slate-300 truncate text-[11px]">• {f.title}</div>
                     ))}
@@ -1497,10 +1497,10 @@ export const ProjectDetails = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-mono font-bold animate-pulse">
-                    🔥 SCENARIO ACTIVE
+                    SCENARIO ACTIVE
                   </span>
                   <span className="px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-mono font-bold">
-                    🎓 INTERACTIVE LAB
+                    INTERACTIVE LAB
                   </span>
                   <h3 className="text-base font-bold text-slate-100">{activeAttempt.scenarioName}</h3>
                 </div>
@@ -1676,7 +1676,7 @@ export const ProjectDetails = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
                       <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
                         <span className="text-[10px] text-slate-400 uppercase block">Observed Status</span>
-                        <span className="font-bold text-rose-400 text-sm">🔴 {summary.observedStatus}</span>
+                        <span className="font-bold text-rose-400 text-sm">{summary.observedStatus}</span>
                       </div>
                       <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
                         <span className="text-[10px] text-slate-400 uppercase block">Container Restarts</span>

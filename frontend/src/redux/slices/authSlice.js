@@ -1,6 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from '../../services/authService';
 
+let initialUser = null;
+try {
+  const savedUser = localStorage.getItem('user');
+  if (savedUser) {
+    initialUser = JSON.parse(savedUser);
+  }
+} catch (e) {}
+
 const initialToken = localStorage.getItem('token') || null;
 
 export const loginThunk = createAsyncThunk(
@@ -88,11 +96,11 @@ export const updateProfileThunk = createAsyncThunk(
 );
 
 const initialState = {
-  user: null,
+  user: initialUser,
   token: initialToken,
   isAuthenticated: !!initialToken,
   loading: false,
-  isInitializing: !!initialToken,
+  isInitializing: !!initialToken && !initialUser,
   error: null,
 };
 
@@ -110,6 +118,7 @@ export const authSlice = createSlice({
       state.isInitializing = false;
       state.error = null;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
   },
   extraReducers: (builder) => {
@@ -125,6 +134,9 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem('token', action.payload.token);
+        if (action.payload.user) {
+          localStorage.setItem('user', JSON.stringify(action.payload.user));
+        }
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -143,6 +155,9 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem('token', action.payload.token);
+        if (action.payload.user) {
+          localStorage.setItem('user', JSON.stringify(action.payload.user));
+        }
       })
       .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false;
@@ -160,6 +175,9 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem('token', action.payload.token);
+        if (action.payload.user) {
+          localStorage.setItem('user', JSON.stringify(action.payload.user));
+        }
       })
       .addCase(googleLoginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -178,6 +196,9 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem('token', action.payload.token);
+        if (action.payload.user) {
+          localStorage.setItem('user', JSON.stringify(action.payload.user));
+        }
       })
       .addCase(githubLoginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -196,6 +217,9 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem('token', action.payload.token);
+        if (action.payload.user) {
+          localStorage.setItem('user', JSON.stringify(action.payload.user));
+        }
       })
       .addCase(demoLoginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -211,6 +235,9 @@ export const authSlice = createSlice({
         state.isInitializing = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        if (action.payload) {
+          localStorage.setItem('user', JSON.stringify(action.payload));
+        }
       })
       .addCase(fetchProfileThunk.rejected, (state) => {
         state.loading = false;
@@ -219,6 +246,7 @@ export const authSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
       })
 
       // Update Profile
@@ -229,6 +257,9 @@ export const authSlice = createSlice({
       .addCase(updateProfileThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+        if (action.payload) {
+          localStorage.setItem('user', JSON.stringify(action.payload));
+        }
       })
       .addCase(updateProfileThunk.rejected, (state, action) => {
         state.loading = false;

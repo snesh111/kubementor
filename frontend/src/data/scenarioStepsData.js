@@ -72,7 +72,7 @@ export const SCENARIO_STEPS_DATA = {
         subtitle: 'Why short-lived commands break Kubernetes deployments',
         explanation: 'Kubernetes Deployments are designed for long-running services (like web servers or daemons). If a container runs a command that finishes immediately (like echo "done" or exit 1), Kubelet thinks the process died unexpectedly and restarts it.',
         comparison: {
-          badTitle: '❌ Broken Deployment YAML (Causes CrashLoop)',
+          badTitle: 'Broken Deployment YAML (Causes CrashLoop)',
           badCode: `spec:
   containers:
   - name: web-app
@@ -80,7 +80,7 @@ export const SCENARIO_STEPS_DATA = {
     # BAD: This command exits immediately with error!
     command: ["sh", "-c", "echo 'Booting...' && exit 1"]`,
           badReason: 'Process exits with code 1 after 1 second. Kubelet detects exit and triggers CrashLoopBackOff.',
-          goodTitle: '✅ Fixed Deployment YAML (Runs in Foreground)',
+          goodTitle: 'Fixed Deployment YAML (Runs in Foreground)',
           goodCode: `spec:
   containers:
   - name: web-app
@@ -205,7 +205,7 @@ export const SCENARIO_STEPS_DATA = {
         subtitle: 'Understanding the difference and fixing manifest typos',
         explanation: 'ErrImagePull is the immediate error when the network request fails. ImagePullBackOff is the delayed retry loop. Let\'s see what a broken manifest looks like compared to a fixed one.',
         comparison: {
-          badTitle: '❌ Broken Deployment YAML (Non-existent Image Tag)',
+          badTitle: 'Broken Deployment YAML (Non-existent Image Tag)',
           badCode: `spec:
   containers:
   - name: web-app
@@ -213,7 +213,7 @@ export const SCENARIO_STEPS_DATA = {
     image: nginx:1.999.0
     imagePullPolicy: IfNotPresent`,
           badReason: 'Registry returns "manifest unknown" (404) because nginx:1.999.0 does not exist. Kubelet fails to start the container.',
-          goodTitle: '✅ Fixed Deployment YAML (Valid Verified Tag)',
+          goodTitle: 'Fixed Deployment YAML (Valid Verified Tag)',
           goodCode: `spec:
   containers:
   - name: web-app
@@ -339,7 +339,7 @@ export const SCENARIO_STEPS_DATA = {
         subtitle: 'Configuring proper memory requests and limits with safety headroom',
         explanation: 'If limits are set too tight (e.g., 16Mi for a web app that requires 64Mi during startup), the container will be killed before it even finishes booting.',
         comparison: {
-          badTitle: '❌ Broken Resource Spec (Memory Limit Too Low)',
+          badTitle: 'Broken Resource Spec (Memory Limit Too Low)',
           badCode: `spec:
   containers:
   - name: web-app
@@ -349,7 +349,7 @@ export const SCENARIO_STEPS_DATA = {
         memory: "8Mi"   # WAY too small! Web server needs ~32Mi
         cpu: "100m"`,
           badReason: 'Process memory usage immediately exceeds 8Mi limit on boot, triggering kernel OOMKilled (Exit 137).',
-          goodTitle: '✅ Sized Resource Spec (With Headroom)',
+          goodTitle: 'Sized Resource Spec (With Headroom)',
           goodCode: `spec:
   containers:
   - name: web-app
@@ -474,7 +474,7 @@ export const SCENARIO_STEPS_DATA = {
         subtitle: 'How to create and bind ConfigMaps to environment variables',
         explanation: 'ConfigMaps store non-confidential configuration in key-value pairs. Here is how to create one using YAML or the CLI.',
         comparison: {
-          badTitle: '❌ Broken Reference (ConfigMap Missing)',
+          badTitle: 'Broken Reference (ConfigMap Missing)',
           badCode: `spec:
   containers:
   - name: web-app
@@ -486,7 +486,7 @@ export const SCENARIO_STEPS_DATA = {
           name: app-config   # Does not exist in namespace!
           key: APP_COLOR`,
           badReason: 'Kubelet attempts to lookup "app-config", fails with 404, and stops pod initialization.',
-          goodTitle: '✅ ConfigMap Definition YAML',
+          goodTitle: 'ConfigMap Definition YAML',
           goodCode: `apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -604,7 +604,7 @@ web-service   <none>             2m14s`,
         subtitle: 'Aligning Service selectors with Pod labels',
         explanation: 'Let\'s see a broken Service selector vs a corrected Service selector.',
         comparison: {
-          badTitle: '❌ Broken Service Selector (Mismatch)',
+          badTitle: 'Broken Service Selector (Mismatch)',
           badCode: `apiVersion: v1
 kind: Service
 metadata:
@@ -616,7 +616,7 @@ spec:
   - port: 80
     targetPort: 80`,
           badReason: 'No pods have label "app: web-server-v2". Endpoints list remains empty (<none>).',
-          goodTitle: '✅ Corrected Service Selector (Matched)',
+          goodTitle: 'Corrected Service Selector (Matched)',
           goodCode: `apiVersion: v1
 kind: Service
 metadata:
@@ -740,7 +740,7 @@ spec:
         subtitle: 'Creating standard kubernetes.io/tls secrets',
         explanation: 'A valid TLS Secret must have `type: kubernetes.io/tls` and contain both `tls.crt` and `tls.key` in base64 encoding.',
         comparison: {
-          badTitle: '❌ Broken Ingress (References Missing Secret)',
+          badTitle: 'Broken Ingress (References Missing Secret)',
           badCode: `apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -751,7 +751,7 @@ spec:
     - app.example.com
     secretName: web-tls   # Secret does not exist!`,
           badReason: 'Ingress controller cannot load SSL certificate. HTTPS connections fail with certificate errors or 503.',
-          goodTitle: '✅ TLS Secret Creation via CLI',
+          goodTitle: 'TLS Secret Creation via CLI',
           goodCode: `kubectl create secret tls web-tls \\
   --cert=path/to/tls.crt \\
   --key=path/to/tls.key \\
@@ -799,6 +799,506 @@ spec:
           'TLS Secret exists in the target namespace with valid certificates.',
           'Ingress spec references the correct secretName and host.',
           'Ingress controller synchronizes without warning events.',
+        ],
+      },
+    ],
+  },
+
+  'topic-pods': {
+    code: '07',
+    scenarioId: 'topic-pods',
+    name: 'Pods & Multi-Container Pods',
+    category: 'Kubernetes Basics',
+    difficulty: 'Beginner',
+    summary: 'Master the atomic scheduling unit of Kubernetes and multi-container patterns.',
+    steps: [
+      {
+        id: 'intro',
+        type: 'LESSON',
+        title: 'What is a Kubernetes Pod',
+        subtitle: 'Understanding the atomic scheduling unit in Kubernetes',
+        analogy: 'Think of a Pod like a pea pod containing one or more peas (containers). All containers inside the same Pod share the same home address (IP address) and storage room (volumes).',
+        concept: 'A Pod is the smallest deployable unit in Kubernetes. Containers within a Pod share the same network namespace (including IP address and ports) and can communicate via localhost. They can also share mounted storage volumes for inter-process logging or data exchange.',
+        flow: [
+          { label: 'KUBE-SCHEDULER', sub: 'Schedules Pod to Node', color: 'emerald' },
+          { label: 'CONTAINER 1', sub: 'Web App (Port 80)', color: 'emerald' },
+          { label: 'CONTAINER 2', sub: 'Sidecar Logger (localhost)', color: 'amber' },
+        ],
+        keyTakeaways: [
+          'Pods encapsulate one or more tightly coupled containers that share lifecycle, network, and storage.',
+          'Containers within the same Pod communicate using localhost and cannot have conflicting port bindings.',
+          'Pods are ephemeral—they are created, assigned unique IDs, and replaced rather than repaired.',
+        ],
+      },
+      {
+        id: 'diagnostics',
+        type: 'DIAGNOSTICS',
+        title: 'Inspect Pods & Multi-Container Specs',
+        subtitle: 'Essential CLI commands to inspect pod status and logs',
+        explanation: 'Learn how to inspect individual containers within multi-container pods.',
+        commands: [
+          {
+            cmd: 'kubectl get pods -o wide',
+            desc: 'View pod phase, IP address, and assigned worker node.',
+          },
+          {
+            cmd: 'kubectl describe pod web-app',
+            desc: 'Inspect all container definitions, volume mounts, and lifecycle events.',
+          },
+          {
+            cmd: 'kubectl logs web-app -c nginx',
+            desc: 'Stream logs from a specific container inside a multi-container pod.',
+          },
+          {
+            cmd: 'kubectl exec -it web-app -c nginx -- env',
+            desc: 'Run commands inside a specific container in the pod.',
+          },
+        ],
+        exampleOutput: {
+          title: 'Sample multi-container pod status:',
+          code: `NAME      READY   STATUS    RESTARTS   AGE   IP           NODE
+web-app   2/2     Running   0          5m    10.244.0.5   node-1`,
+        },
+      },
+      {
+        id: 'deepdive',
+        type: 'LESSON',
+        title: 'Sidecar Pattern & Shared Volumes',
+        subtitle: 'How auxiliary containers enhance primary services',
+        explanation: 'The Sidecar Pattern uses a secondary container to perform helper tasks (such as log shipping, metrics collection, or proxying) while sharing an emptyDir volume with the primary container.',
+        comparison: {
+          badTitle: 'Single Container Without Auxiliary Logging',
+          badCode: `spec:
+  containers:
+  - name: app
+    image: nginx:1.25.3
+    # Logs are only written to local disk, lost on pod exit!`,
+          badReason: 'Application logs are trapped inside the container with no dedicated shipper.',
+          goodTitle: 'Multi-Container Pod with Shared Volume',
+          goodCode: `spec:
+  volumes:
+  - name: shared-logs
+    emptyDir: {}
+  containers:
+  - name: app
+    image: nginx:1.25.3
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /var/log/nginx
+  - name: log-sidecar
+    image: alpine:3.18
+    command: ["sh", "-c", "tail -F /var/log/nginx/access.log"]
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /var/log/nginx`,
+          goodReason: 'App and Sidecar share access to /var/log/nginx. Sidecar streams logs reliably.',
+        },
+      },
+      {
+        id: 'task',
+        type: 'TASK',
+        title: 'Deploy & Audit Multi-Container Workload',
+        subtitle: 'Hands-on practice with container specifications',
+        instruction: 'Inspect the deployment manifest, configure the container specifications with proper ports and resources, and verify that the pod reaches a 1/1 Running state.',
+        stepsToComplete: [
+          '1. Run `kubectl get pods` to view active workloads.',
+          '2. Inspect the pod details with `kubectl describe pod web-app`.',
+          '3. Review the container specs in `deployment.yaml`.',
+          '4. Apply the manifest and verify the pod reaches 1/1 Ready.',
+        ],
+        actionHint: 'Tip: Ensure container ports do not conflict on localhost!',
+      },
+      {
+        id: 'quiz',
+        type: 'QUIZ',
+        title: 'Pod Networking & Communication',
+        subtitle: 'Test your understanding of Pod architecture',
+        question: 'How do two containers located inside the exact same Kubernetes Pod communicate with each other over the network?',
+        options: [
+          'Through the external Kubernetes Ingress controller.',
+          'Via "localhost" using distinct port numbers, because they share the same network namespace.',
+          'By querying the Kubernetes DNS service name.',
+          'Containers in the same pod cannot communicate over the network.',
+        ],
+        correctIndex: 1,
+        explanation: 'Containers in the same Pod share the same network namespace and IP address, so they communicate over localhost using standard TCP/UDP ports.',
+      },
+      {
+        id: 'validation',
+        type: 'VALIDATION',
+        title: 'Validate Pod Status & Readiness',
+        subtitle: 'Automated evaluation of pod workload health',
+        explanation: 'Run the validation check to verify that your Pod is correctly scheduled, initialized, and Ready.',
+        requirements: [
+          'Pod is in the Running phase with 1/1 Ready condition.',
+          'No restart loops or container initialization errors.',
+          'Containers pass all liveness and readiness checks.',
+        ],
+      },
+    ],
+  },
+
+  'topic-deployments': {
+    code: '08',
+    scenarioId: 'topic-deployments',
+    name: 'Deployments & Rolling Updates',
+    category: 'Kubernetes Basics',
+    difficulty: 'Beginner',
+    summary: 'Declaratively manage replica sets, rolling updates, and zero-downtime rollouts.',
+    steps: [
+      {
+        id: 'intro',
+        type: 'LESSON',
+        title: 'Declarative Deployments & Replicas',
+        subtitle: 'Managing stateless application lifecycles at scale',
+        analogy: 'Imagine an automated factory manager. You declare "I always want 3 identical web servers running version 1.2". The manager automatically creates, monitors, and replaces them if any fail.',
+        concept: 'A Deployment provides declarative updates for Pods and ReplicaSets. You describe a desired state in a Deployment manifest, and the Deployment Controller changes the actual state to the desired state at a controlled rate.',
+        flow: [
+          { label: 'DEPLOYMENT', sub: 'Desired: 3 Replicas', color: 'emerald' },
+          { label: 'REPLICASET', sub: 'Manages Pod Instances', color: 'emerald' },
+          { label: 'PODS [1, 2, 3]', sub: 'Serving Traffic', color: 'emerald' },
+        ],
+        keyTakeaways: [
+          'Deployments manage ReplicaSets, which in turn manage individual Pod instances.',
+          'They support zero-downtime rolling updates by replacing old pods with new pods incrementally.',
+          'If a rollout encounters errors, you can instantly rollback to a previous revision.',
+        ],
+      },
+      {
+        id: 'diagnostics',
+        type: 'DIAGNOSTICS',
+        title: 'Inspect Rollouts, Revisions & Scaling',
+        subtitle: 'Essential CLI commands to manage deployment rollouts',
+        explanation: 'Master the commands to scale replicas and monitor rollout progression.',
+        commands: [
+          {
+            cmd: 'kubectl get deployments',
+            desc: 'Check ready, up-to-date, and available replica counts.',
+          },
+          {
+            cmd: 'kubectl rollout status deployment/web-app',
+            desc: 'Monitor the real-time progress of a rolling update.',
+          },
+          {
+            cmd: 'kubectl rollout history deployment/web-app',
+            desc: 'View deployment revision history and applied changes.',
+          },
+          {
+            cmd: 'kubectl scale deployment web-app --replicas=3',
+            desc: 'Dynamically scale the deployment replica count.',
+          },
+        ],
+        exampleOutput: {
+          title: 'Sample deployment status:',
+          code: `NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+web-app   3/3     3            3           10m`,
+        },
+      },
+      {
+        id: 'deepdive',
+        type: 'LESSON',
+        title: 'Rolling Updates vs Recreate Strategy',
+        subtitle: 'Understanding zero-downtime rollout parameters',
+        explanation: 'The RollingUpdate strategy ensures that some old pods remain available while new pods are spinning up, using maxSurge and maxUnavailable to control rate.',
+        comparison: {
+          badTitle: 'Recreate Strategy (Causes Temporary Downtime)',
+          badCode: `spec:
+  strategy:
+    type: Recreate
+    # Kills all existing pods BEFORE creating new ones!`,
+          badReason: 'All old pods are terminated before new pods start, causing a service outage during deployment.',
+          goodTitle: 'RollingUpdate Strategy (Zero Downtime)',
+          goodCode: `spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0`,
+          goodReason: 'New pods are created and must pass readiness probes before old pods are terminated.',
+        },
+      },
+      {
+        id: 'task',
+        type: 'TASK',
+        title: 'Scale & Verify Rolling Deployment',
+        subtitle: 'Hands-on practice with replica management',
+        instruction: 'Scale the "web-app" deployment to 2 or more replicas, ensure all pods are running and ready, and check rollout status.',
+        stepsToComplete: [
+          '1. Run `kubectl get deployments` to inspect current replica counts.',
+          '2. Update `replicas: 2` in `deployment.yaml` or scale via CLI.',
+          '3. Apply changes and run `kubectl rollout status deployment/web-app`.',
+          '4. Verify all replicas are ready with `kubectl get pods`.',
+        ],
+        actionHint: 'Tip: Check availableReplicas in kubectl describe deployment web-app!',
+      },
+      {
+        id: 'quiz',
+        type: 'QUIZ',
+        title: 'Zero-Downtime Rollout Strategy',
+        subtitle: 'Test your Deployment strategy knowledge',
+        question: 'What setting ensures that zero existing pods are terminated until new replacement pods are completely Ready?',
+        options: [
+          'strategy.type: Recreate',
+          'spec.strategy.rollingUpdate.maxUnavailable: 0',
+          'spec.replicas: 0',
+          'spec.minReadySeconds: 0',
+        ],
+        correctIndex: 1,
+        explanation: 'Setting maxUnavailable: 0 guarantees that the Deployment controller will never shut down an existing pod until a new pod has successfully started and passed its readiness checks.',
+      },
+      {
+        id: 'validation',
+        type: 'VALIDATION',
+        title: 'Validate Deployment Health & Replicas',
+        subtitle: 'Automated evaluation of deployment state',
+        explanation: 'Run the validation check to verify that all desired replicas are active and available.',
+        requirements: [
+          'Deployment has at least 1 available replica.',
+          'All pods in the deployment pass readiness checks.',
+          'No rollout errors or pending pod updates.',
+        ],
+      },
+    ],
+  },
+
+  'topic-services': {
+    code: '09',
+    scenarioId: 'topic-services',
+    name: 'Services & Cluster Networking',
+    category: 'Kubernetes Basics',
+    difficulty: 'Beginner',
+    summary: 'Expose workloads internally and externally via ClusterIP, NodePort, and LoadBalancer.',
+    steps: [
+      {
+        id: 'intro',
+        type: 'LESSON',
+        title: 'Service Discovery & L4 Networking',
+        subtitle: 'How Kubernetes provides stable network endpoints',
+        analogy: 'Think of a Service like a corporate front-desk phone extension. Individual workers (Pods) may change desks or take days off, but calling the extension always routes you to an available person.',
+        concept: 'In Kubernetes, Pods are ephemeral and their IP addresses change frequently. A Service is an abstraction that defines a logical set of Pods and a policy to access them via a stable IP address and DNS name.',
+        flow: [
+          { label: 'CLIENT', sub: 'Requests web-service:80', color: 'emerald' },
+          { label: 'SERVICE (ClusterIP)', sub: 'Stable Virtual IP', color: 'emerald' },
+          { label: 'ENDPOINTS', sub: 'Load balances to Pod IPs', color: 'emerald' },
+        ],
+        keyTakeaways: [
+          'Services use label selectors to automatically track healthy Pod IPs in an Endpoints object.',
+          'ClusterIP is the default service type, exposing the service on an internal cluster-only IP.',
+          'CoreDNS automatically creates DNS records for every Service in the format `<service>.<namespace>.svc.cluster.local`.',
+        ],
+      },
+      {
+        id: 'diagnostics',
+        type: 'DIAGNOSTICS',
+        title: 'Inspect Services, Endpoints & DNS',
+        subtitle: 'Essential CLI commands to trace service routing',
+        explanation: 'Learn how to inspect Services and verify that backend Endpoints are populated.',
+        commands: [
+          {
+            cmd: 'kubectl get services',
+            desc: 'List services, ClusterIPs, and exposed port mappings.',
+          },
+          {
+            cmd: 'kubectl get endpoints web-service',
+            desc: 'Check the target pod IP addresses registered behind the service.',
+          },
+          {
+            cmd: 'kubectl describe service web-service',
+            desc: 'Inspect label selectors, port/targetPort mapping, and active endpoints.',
+          },
+        ],
+        exampleOutput: {
+          title: 'Sample service endpoints:',
+          code: `NAME          ENDPOINTS            AGE
+web-service   10.244.0.5:80        15m`,
+        },
+      },
+      {
+        id: 'deepdive',
+        type: 'LESSON',
+        title: 'Port vs TargetPort vs NodePort',
+        subtitle: 'Understanding Kubernetes service port mapping',
+        explanation: 'A Service defines `port` (the port the service exposes inside the cluster) and `targetPort` (the port the container is listening on).',
+        comparison: {
+          badTitle: 'Mismatched TargetPort (Connection Refused)',
+          badCode: `spec:
+  ports:
+  - port: 80
+    targetPort: 8080 # BAD: Container is listening on 80!`,
+          badReason: 'Traffic arrives at the pod on port 8080, where nothing is listening, returning Connection Refused.',
+          goodTitle: 'Correct Port Alignment',
+          goodCode: `spec:
+  ports:
+  - port: 80
+    targetPort: 80   # GOOD: Matches containerPort: 80`,
+          goodReason: 'Traffic forwarded from Service port 80 connects directly to Nginx listening on port 80.',
+        },
+      },
+      {
+        id: 'task',
+        type: 'TASK',
+        title: 'Deploy Service & Verify Endpoints',
+        subtitle: 'Hands-on practice with service networking',
+        instruction: 'Inspect the Service manifest, verify that its `spec.selector` matches the Pod labels, and confirm that `kubectl get endpoints` displays healthy target pods.',
+        stepsToComplete: [
+          '1. Run `kubectl get pods --show-labels` to see pod label metadata.',
+          '2. Check `service.yaml` to ensure selector matches `app: web-app`.',
+          '3. Apply the service manifest.',
+          '4. Verify endpoints are registered with `kubectl get endpoints web-service`.',
+        ],
+        actionHint: 'Tip: If Endpoints is <none>, check your selector label spelling!',
+      },
+      {
+        id: 'quiz',
+        type: 'QUIZ',
+        title: 'Service Routing Mechanism',
+        subtitle: 'Test your Kubernetes networking knowledge',
+        question: 'How does a Kubernetes Service determine which Pods should receive incoming traffic?',
+        options: [
+          'By matching the Pod hostname to the Service name.',
+          'By using label selectors (spec.selector) that match the labels on running Pods.',
+          'By scanning for all pods running in the same namespace automatically.',
+          'By manual IP address configuration in the kube-proxy table.',
+        ],
+        correctIndex: 1,
+        explanation: 'Kubernetes Services use label selectors to dynamically match and discover Pods. Any healthy Pod with matching labels is automatically added to the Service Endpoints list.',
+      },
+      {
+        id: 'validation',
+        type: 'VALIDATION',
+        title: 'Validate Service & Endpoint Connectivity',
+        subtitle: 'Automated evaluation of service networking',
+        explanation: 'Run the validation check to verify that your Service is properly created and routing to ready pod endpoints.',
+        requirements: [
+          'Service exists in the namespace with valid ClusterIP.',
+          'Service selector correctly matches running pod labels.',
+          'Endpoints object has at least 1 healthy pod target IP.',
+        ],
+      },
+    ],
+  },
+
+  'topic-configmaps': {
+    code: '10',
+    scenarioId: 'topic-configmaps',
+    name: 'ConfigMaps & Environment Injection',
+    category: 'Configuration',
+    difficulty: 'Beginner',
+    summary: 'Decouple runtime parameters and configuration files from container images.',
+    steps: [
+      {
+        id: 'intro',
+        type: 'LESSON',
+        title: 'Decoupling Configuration from Code',
+        subtitle: 'Store configuration parameters outside container images',
+        analogy: 'Imagine a universal power adapter. Instead of manufacturing a different laptop for every country, you build one laptop and change the plug adapter (ConfigMap) depending on the environment.',
+        concept: 'A ConfigMap is an API object used to store non-confidential data in key-value pairs. Pods can consume ConfigMaps as environment variables, command-line arguments, or as configuration files mounted in a volume.',
+        flow: [
+          { label: 'CONFIGMAP', sub: 'Key-Value Pairs (APP_ENV)', color: 'emerald' },
+          { label: 'POD SPEC', sub: 'envFrom / valueFrom', color: 'emerald' },
+          { label: 'CONTAINER', sub: 'Reads Environment Variable', color: 'emerald' },
+        ],
+        keyTakeaways: [
+          'ConfigMaps adhere to the 12-Factor App methodology by separating configuration from application code.',
+          'You can inject ConfigMap values as individual environment variables or entire env dictionaries using envFrom.',
+          'ConfigMaps mounted as volumes update dynamically when modified, without requiring a container image rebuild.',
+        ],
+      },
+      {
+        id: 'diagnostics',
+        type: 'DIAGNOSTICS',
+        title: 'Inspect ConfigMaps & Environment',
+        subtitle: 'Essential CLI commands to inspect configuration',
+        explanation: 'Master commands to inspect ConfigMaps and verify environment variable injection.',
+        commands: [
+          {
+            cmd: 'kubectl get configmaps',
+            desc: 'List all ConfigMaps in the current namespace.',
+          },
+          {
+            cmd: 'kubectl describe configmap app-config',
+            desc: 'View key-value pairs and data entries inside the ConfigMap.',
+          },
+          {
+            cmd: 'kubectl exec -it web-app -- env',
+            desc: 'Print all environment variables inside the running container.',
+          },
+        ],
+        exampleOutput: {
+          title: 'Sample ConfigMap describe output:',
+          code: `Name:         app-config
+Namespace:    default
+Data
+====
+APP_ENV:      production
+LOG_LEVEL:    info`,
+        },
+      },
+      {
+        id: 'deepdive',
+        type: 'LESSON',
+        title: 'Environment Variables vs Volume Mounts',
+        subtitle: 'Two ways containers consume ConfigMaps',
+        explanation: 'ConfigMaps can be injected directly into process environment variables or mounted as read-only configuration files in the container filesystem.',
+        comparison: {
+          badTitle: 'Hardcoded Configuration in Container Image',
+          badCode: `ENV APP_ENV=production
+ENV DB_HOST=10.0.0.1
+# BAD: Requires rebuilding Docker image to change database!`,
+          badReason: 'Changing environment parameters requires building, tagging, and pushing a new container image.',
+          goodTitle: 'Dynamic Injection via ConfigMap',
+          goodCode: `spec:
+  containers:
+  - name: web-app
+    image: nginx:1.25.3
+    env:
+    - name: APP_ENV
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_ENV`,
+          goodReason: 'Container image is environment-agnostic; configuration is managed declaratively in K8s.',
+        },
+      },
+      {
+        id: 'task',
+        type: 'TASK',
+        title: 'Deploy ConfigMap & Inject into Pod',
+        subtitle: 'Hands-on practice with ConfigMap injection',
+        instruction: 'Create or verify the "app-config" ConfigMap in the namespace, reference it in `deployment.yaml`, and confirm the pod boots successfully.',
+        stepsToComplete: [
+          '1. Run `kubectl get configmaps` to see existing configuration.',
+          '2. Check the ConfigMap data with `kubectl describe configmap app-config`.',
+          '3. Review the `env` block in `deployment.yaml`.',
+          '4. Apply manifests and verify the pod is Running and Ready.',
+        ],
+        actionHint: 'Tip: Ensure the key in configMapKeyRef matches the exact key in the ConfigMap!',
+      },
+      {
+        id: 'quiz',
+        type: 'QUIZ',
+        title: 'ConfigMap Consumption',
+        subtitle: 'Test your ConfigMap knowledge',
+        question: 'When a ConfigMap is consumed as environment variables via "valueFrom.configMapKeyRef", what happens when you edit the ConfigMap data?',
+        options: [
+          'The environment variables update instantly in all running containers without restart.',
+          'Running containers keep their old environment variables until the Pod is restarted or recreated.',
+          'The Pod automatically reboots immediately.',
+          'Kubernetes throws a validation error.',
+        ],
+        correctIndex: 1,
+        explanation: 'Environment variables are injected at container startup. Changing a ConfigMap will NOT update environment variables inside already-running containers until those pods are restarted.',
+      },
+      {
+        id: 'validation',
+        type: 'VALIDATION',
+        title: 'Validate ConfigMap Injection',
+        subtitle: 'Automated evaluation of ConfigMap state',
+        explanation: 'Run the validation check to verify that your ConfigMap exists and is properly consumed by the workload.',
+        requirements: [
+          'ConfigMap "app-config" exists with valid data keys.',
+          'Deployment references the ConfigMap without CreateContainerConfigError.',
+          'Pod is in Running and Ready (1/1) state.',
         ],
       },
     ],

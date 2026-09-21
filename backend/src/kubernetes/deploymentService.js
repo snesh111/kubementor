@@ -21,59 +21,57 @@ export const deploymentService = {
       throw new Error(parseResult.error);
     }
 
-    // In simulation mode, evaluate if user fix resolved the failure scenario
-    if (!k8sClientWrapper.isConnected || !k8sClientWrapper.coreV1Api) {
-      try {
-        const depDoc = parseResult.documents.find((d) => d.kind === 'Deployment');
-        const container = depDoc?.spec?.template?.spec?.containers?.[0];
-        const commandStr = JSON.stringify(container?.command || []) + JSON.stringify(container?.args || []);
-        const isExitCommand = commandStr.includes('exit 1') || commandStr.includes('exit 2') || commandStr.includes('exit');
-        const isBadImage = (container?.image || '').includes('nonexistent') || (container?.image || '').includes('invalid');
+    // Evaluate if user fix resolved the failure scenario
+    try {
+      const depDoc = parseResult.documents.find((d) => d.kind === 'Deployment');
+      const container = depDoc?.spec?.template?.spec?.containers?.[0];
+      const commandStr = JSON.stringify(container?.command || []) + JSON.stringify(container?.args || []);
+      const isExitCommand = commandStr.includes('exit 1') || commandStr.includes('exit 2') || commandStr.includes('exit');
+      const isBadImage = (container?.image || '').includes('nonexistent') || (container?.image || '').includes('invalid');
 
-        const deploymentRecord = await DeploymentRecord.findOne({ namespace });
-        if (deploymentRecord) {
-          const activeAttempt = await ScenarioAttempt.findOne({
-            $or: [{ deployment: deploymentRecord._id }, { project: deploymentRecord.project }],
-            status: { $in: ['active', 'injecting'] },
-          }).sort({ createdAt: -1 });
+      const deploymentRecord = await DeploymentRecord.findOne({ namespace });
+      if (deploymentRecord) {
+        const activeAttempt = await ScenarioAttempt.findOne({
+          $or: [{ deployment: deploymentRecord._id }, { project: deploymentRecord.project }],
+          status: { $in: ['active', 'injecting'] },
+        }).sort({ createdAt: -1 });
 
-          if (activeAttempt) {
-            let isFixed = false;
-            if (activeAttempt.scenarioId === 'crash-loop-backoff' && !isExitCommand) {
+        if (activeAttempt) {
+          let isFixed = false;
+          if (activeAttempt.scenarioId === 'crash-loop-backoff' && !isExitCommand) {
+            isFixed = true;
+          } else if (activeAttempt.scenarioId === 'image-pull-backoff' && !isBadImage) {
+            isFixed = true;
+          } else if (activeAttempt.scenarioId === 'oom-killed' && (container?.resources?.limits?.memory || '256Mi') !== '16Mi') {
+            isFixed = true;
+          } else if (activeAttempt.scenarioId === 'missing-configmap' && parseResult.documents.some((d) => d.kind === 'ConfigMap' && (d.metadata?.name === 'app-config' || !d.metadata?.name))) {
+            isFixed = true;
+          } else if (activeAttempt.scenarioId === 'service-connectivity') {
+            const svcDoc = parseResult.documents.find((d) => d.kind === 'Service');
+            const depLabels = depDoc?.spec?.template?.metadata?.labels || { app: 'web-app' };
+            const svcSelector = svcDoc?.spec?.selector || {};
+            if (Object.keys(svcSelector).length > 0 && Object.entries(svcSelector).every(([k, v]) => depLabels[k] === v)) {
               isFixed = true;
-            } else if (activeAttempt.scenarioId === 'image-pull-backoff' && !isBadImage) {
-              isFixed = true;
-            } else if (activeAttempt.scenarioId === 'oom-killed' && (container?.resources?.limits?.memory || '256Mi') !== '16Mi') {
-              isFixed = true;
-            } else if (activeAttempt.scenarioId === 'missing-configmap' && parseResult.documents.some((d) => d.kind === 'ConfigMap' && (d.metadata?.name === 'app-config' || !d.metadata?.name))) {
-              isFixed = true;
-            } else if (activeAttempt.scenarioId === 'service-connectivity') {
-              const svcDoc = parseResult.documents.find((d) => d.kind === 'Service');
-              const depLabels = depDoc?.spec?.template?.metadata?.labels || { app: 'web-app' };
-              const svcSelector = svcDoc?.spec?.selector || {};
-              if (Object.keys(svcSelector).length > 0 && Object.entries(svcSelector).every(([k, v]) => depLabels[k] === v)) {
-                isFixed = true;
-              }
-            } else if (activeAttempt.scenarioId === 'ingress-tls-failure') {
-              const ingDoc = parseResult.documents.find((d) => d.kind === 'Ingress');
-              const tlsSecret = ingDoc?.spec?.tls?.[0]?.secretName;
-              if (tlsSecret && tlsSecret === 'example-tls-secret') {
-                isFixed = true;
-              }
             }
-
-            if (isFixed) {
-              activeAttempt.restorationDetails = { fixApplied: true };
-              await activeAttempt.save();
-            } else {
-              activeAttempt.restorationDetails = null;
-              await activeAttempt.save();
+          } else if (activeAttempt.scenarioId === 'ingress-tls-failure') {
+            const ingDoc = parseResult.documents.find((d) => d.kind === 'Ingress');
+            const tlsSecret = ingDoc?.spec?.tls?.[0]?.secretName;
+            if (tlsSecret && tlsSecret === 'example-tls-secret') {
+              isFixed = true;
             }
           }
+
+          if (isFixed) {
+            activeAttempt.restorationDetails = { fixApplied: true };
+            await activeAttempt.save();
+          } else {
+            activeAttempt.restorationDetails = null;
+            await activeAttempt.save();
+          }
         }
-      } catch (simErr) {
-        console.warn('[Deployment Engine] Simulated validation check error:', simErr.message);
       }
+    } catch (simErr) {
+      console.warn('[Deployment Engine] Manifest validation check error:', simErr.message);
     }
 
     return await deploymentService.applyManifestDocuments(parseResult.documents, namespace);

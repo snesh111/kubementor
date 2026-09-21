@@ -10,9 +10,15 @@ import {
   WifiOff,
   Trash2,
   Maximize2,
+  Loader2,
 } from 'lucide-react';
 
-export const TerminalPane = ({ session }) => {
+export const TerminalPane = ({
+  session,
+  isLabStarted = false,
+  onStartLab,
+  isStartingLab = false,
+}) => {
   const terminalRef = useRef(null);
   const xtermInstance = useRef(null);
   const fitAddonInstance = useRef(null);
@@ -25,7 +31,7 @@ export const TerminalPane = ({ session }) => {
   });
 
   const connectWebSocket = useCallback(() => {
-    if (!session?.labId) return;
+    if (!isLabStarted || !session?.labId) return;
 
     // Retrieve JWT auth token
     const token = localStorage.getItem('token');
@@ -91,7 +97,7 @@ export const TerminalPane = ({ session }) => {
 
   // Initialize xterm.js instance
   useEffect(() => {
-    if (!terminalRef.current) return;
+    if (!isLabStarted || !terminalRef.current) return;
 
     const term = new Terminal({
       cursorBlink: true,
@@ -179,6 +185,52 @@ export const TerminalPane = ({ session }) => {
       }
     }
   };
+
+  if (!isLabStarted) {
+    return (
+      <div className="flex-1 bg-[#000000] rounded-xl border border-[#1e293b]/80 flex flex-col items-center justify-center p-8 text-center select-none shadow-2xl relative overflow-hidden font-mono">
+        {/* Subtle glowing background aura */}
+        <div className="absolute w-72 h-72 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col items-center max-w-md space-y-6">
+          {/* Prompt Icon */}
+          <div className="text-slate-600 text-5xl font-mono font-extrabold tracking-tighter select-none">
+            &gt;_
+          </div>
+
+          {/* Title */}
+          <h2 className="text-lg sm:text-xl font-bold text-slate-100 font-sans tracking-tight leading-snug">
+            Spin up a fresh environment<br />and practice live.
+          </h2>
+
+          {/* Subtitle / Topic details */}
+          <p className="text-xs text-slate-400 font-mono">
+            {session?.labId || 'linux-devops-basic'} &bull; fresh machine &bull; ready in under a minute
+          </p>
+
+          {/* Start Lab Button */}
+          <button
+            type="button"
+            onClick={onStartLab}
+            disabled={isStartingLab}
+            className="px-6 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-950 font-bold font-mono text-sm flex items-center gap-2.5 transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isStartingLab ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                <span>Spinning Up Lab...</span>
+              </>
+            ) : (
+              <>
+                <span className="font-extrabold">&gt;_</span>
+                <span>Start Lab</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#000000] rounded-xl border border-[#1e293b]/80 flex flex-col overflow-hidden font-mono text-xs shadow-2xl">

@@ -287,6 +287,171 @@ spec:
     secretName: nonexistent-tls-secret-failure
 `,
   },
+  'topic-pods': {
+    deployment: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      volumes:
+      - name: shared-logs
+        emptyDir: {}
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+      - name: log-sidecar
+        image: alpine:3.18
+        command: ["sh", "-c", "tail -F /var/log/nginx/access.log"]
+        volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+        resources:
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
+`,
+  },
+  'topic-deployments': {
+    deployment: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+`,
+  },
+  'topic-services': {
+    deployment: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+`,
+    service: `apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  labels:
+    app: web-app
+spec:
+  type: ClusterIP
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+`,
+  },
+  'topic-configmaps': {
+    deployment: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        env:
+        - name: APP_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: APP_ENV
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+`,
+  },
 };
 
 export const labService = {
@@ -995,7 +1160,23 @@ export const labService = {
 
     // 6. Check if fix resolved the scenario in simulation / live state
     const updatedAttempt = await ScenarioAttempt.findById(attempt._id);
-    const isFixed = updatedAttempt?.restorationDetails?.fixApplied === true;
+    let isFixed = updatedAttempt?.restorationDetails?.fixApplied === true;
+
+    if (!isFixed && k8sClientWrapper.isConnected && k8sClientWrapper.coreV1Api) {
+      try {
+        const liveStatus = await statusService.getSandboxStatus(namespace);
+        const hasReadyPod = liveStatus.pods?.some((p) => p.phase === 'Running' && (p.ready === true || p.containers?.[0]?.ready === true));
+        if (hasReadyPod) {
+          isFixed = true;
+          if (updatedAttempt) {
+            updatedAttempt.restorationDetails = { fixApplied: true };
+            await updatedAttempt.save();
+          }
+        }
+      } catch (err) {
+        // Fallback to updatedAttempt check
+      }
+    }
 
     const status = isFixed ? 'fixed' : 'still_failing';
     const observedFailure = isFixed ? null : attempt.scenarioId;

@@ -12,6 +12,9 @@ export const WorkspaceLabPane = ({
   onSelectTab,
   splitPercent,
   onSetSplitPercent,
+  isLabStarted = false,
+  onStartLab,
+  isStartingLab = false,
 }) => {
   return (
     <div className="w-full h-full bg-[#000000] flex flex-col overflow-hidden select-none">
@@ -27,7 +30,12 @@ export const WorkspaceLabPane = ({
       <div className="flex-1 overflow-hidden p-3 flex flex-col select-text">
         {/* TAB 1: REAL INTERACTIVE TERMINAL (kept mounted for session continuity) */}
         <div className={`flex-1 flex flex-col overflow-hidden ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>
-          <TerminalPane session={session} />
+          <TerminalPane
+            session={session}
+            isLabStarted={isLabStarted}
+            onStartLab={onStartLab}
+            isStartingLab={isStartingLab}
+          />
         </div>
 
         {/* TAB 2: YAML MANIFEST EDITOR */}

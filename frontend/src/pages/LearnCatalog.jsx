@@ -30,6 +30,7 @@ import {
   Check,
   ChevronRight,
   ExternalLink,
+  Bot,
 } from 'lucide-react';
 
 import labService from '../services/labService';
@@ -135,89 +136,82 @@ const LIVE_TROUBLESHOOTING_CATEGORY = {
   ],
 };
 
-// 2. FUTURE SCOPE & UPCOMING PRACTICE TOPICS
-const FUTURE_SCOPE_CATEGORIES = [
-  {
-    categoryId: 'basics',
-    categoryName: 'Kubernetes Basics',
-    description: 'Master core building blocks: Pod lifecycle, declarative Deployments, and L4 Services.',
-    isLiveTrack: false,
-    items: [
-      {
-        id: 'topic-pods',
-        slug: 'topic-pods',
-        name: 'Pods & Multi-Container Pods',
-        description: 'Atomic scheduling unit in Kubernetes. Learn container specifications, shared networking, and lifecycle states.',
-        difficulty: 'Beginner',
-        estTime: '10 mins',
-        status: 'Coming Soon',
-        isLive: false,
-        category: 'Kubernetes Basics',
-        iconName: 'Box',
-      },
-      {
-        id: 'topic-deployments',
-        slug: 'topic-deployments',
-        name: 'Deployments & Rolling Updates',
-        description: 'Declaratively manage replica sets, zero-downtime rolling updates, pod revisions, and rollbacks.',
-        difficulty: 'Beginner',
-        estTime: '15 mins',
-        status: 'Coming Soon',
-        isLive: false,
-        category: 'Kubernetes Basics',
-        iconName: 'Layers',
-      },
-      {
-        id: 'topic-services',
-        slug: 'topic-services',
-        name: 'Services & Cluster Networking',
-        description: 'Expose workloads internally and externally via ClusterIP, NodePort, and LoadBalancer with selector discovery.',
-        difficulty: 'Beginner',
-        estTime: '15 mins',
-        status: 'Coming Soon',
-        isLive: false,
-        category: 'Kubernetes Basics',
-        iconName: 'Network',
-      },
-    ],
-  },
-  {
-    categoryId: 'configuration',
-    categoryName: 'Configuration & Secrets',
-    description: 'Decouple runtime parameters and sensitive keys from container images.',
-    isLiveTrack: false,
-    items: [
-      {
-        id: 'topic-configmaps',
-        slug: 'topic-configmaps',
-        name: 'ConfigMaps & Environment Injection',
-        description: 'Inject configuration key-value pairs, property files, and mounted volumes into running containers.',
-        difficulty: 'Beginner',
-        estTime: '10 mins',
-        status: 'Coming Soon',
-        isLive: false,
-        category: 'Configuration',
-        iconName: 'FileText',
-      },
-      {
-        id: 'topic-secrets',
-        slug: 'topic-secrets',
-        name: 'Secrets & Credential Management',
-        description: 'Store sensitive data such as API tokens, passwords, and TLS certificates with base64 encoding and volume mounts.',
-        difficulty: 'Intermediate',
-        estTime: '12 mins',
-        status: 'Coming Soon',
-        isLive: false,
-        category: 'Configuration',
-        iconName: 'KeyRound',
-      },
-    ],
-  },
-];
+// 2. KUBERNETES BASICS PRACTICE TRACK
+const KUBERNETES_BASICS_CATEGORY = {
+  categoryId: 'basics',
+  categoryName: 'Kubernetes Basics',
+  description: 'Master core building blocks: Pod lifecycle, multi-container sidecars, declarative Deployments, and L4 Services.',
+  isLiveTrack: true,
+  items: [
+    {
+      id: 'topic-pods',
+      slug: 'topic-pods',
+      scenarioId: 'topic-pods',
+      name: 'Pods & Multi-Container Pods',
+      description: 'Atomic scheduling unit in Kubernetes. Learn container specifications, shared networking, and lifecycle states.',
+      difficulty: 'Beginner',
+      estTime: '10 mins',
+      status: 'Available',
+      isLive: true,
+      category: 'Kubernetes Basics',
+      iconName: 'Box',
+    },
+    {
+      id: 'topic-deployments',
+      slug: 'topic-deployments',
+      scenarioId: 'topic-deployments',
+      name: 'Deployments & Rolling Updates',
+      description: 'Declaratively manage replica sets, zero-downtime rolling updates, pod revisions, and rollbacks.',
+      difficulty: 'Beginner',
+      estTime: '15 mins',
+      status: 'Available',
+      isLive: true,
+      category: 'Kubernetes Basics',
+      iconName: 'Layers',
+    },
+    {
+      id: 'topic-services',
+      slug: 'topic-services',
+      scenarioId: 'topic-services',
+      name: 'Services & Cluster Networking',
+      description: 'Expose workloads internally and externally via ClusterIP, NodePort, and LoadBalancer with selector discovery.',
+      difficulty: 'Beginner',
+      estTime: '15 mins',
+      status: 'Available',
+      isLive: true,
+      category: 'Kubernetes Basics',
+      iconName: 'Network',
+    },
+  ],
+};
+
+// 3. CONFIGURATION PRACTICE TRACK
+const CONFIGURATION_CATEGORY = {
+  categoryId: 'configuration',
+  categoryName: 'Configuration',
+  description: 'Decouple runtime parameters and environment variables from container images.',
+  isLiveTrack: true,
+  items: [
+    {
+      id: 'topic-configmaps',
+      slug: 'topic-configmaps',
+      scenarioId: 'topic-configmaps',
+      name: 'ConfigMaps & Environment Injection',
+      description: 'Inject configuration key-value pairs, property files, and mounted volumes into running containers.',
+      difficulty: 'Beginner',
+      estTime: '10 mins',
+      status: 'Available',
+      isLive: true,
+      category: 'Configuration',
+      iconName: 'FileText',
+    },
+  ],
+};
 
 const FULL_ORDERED_CATALOG = [
   LIVE_TROUBLESHOOTING_CATEGORY,
-  ...FUTURE_SCOPE_CATEGORIES,
+  KUBERNETES_BASICS_CATEGORY,
+  CONFIGURATION_CATEGORY,
 ];
 
 export const LearnCatalog = () => {
@@ -346,19 +340,19 @@ export const LearnCatalog = () => {
         {/* 4 Clean Feature Badges */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-9 text-xs font-mono text-slate-300 max-w-3xl">
           <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-emerald-500/40 transition-colors">
-            <span className="text-emerald-400 font-bold">⚡</span>
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
             <span>10s Live Sandbox</span>
           </div>
           <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-teal-500/40 transition-colors">
-            <span className="text-teal-400">💻</span>
+            <Terminal className="w-3.5 h-3.5 text-teal-400" />
             <span>Real kubectl &amp; Logs</span>
           </div>
           <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-cyan-500/40 transition-colors">
-            <span className="text-cyan-400">🛠️</span>
+            <Wrench className="w-3.5 h-3.5 text-cyan-400" />
             <span>Fix Broken Manifests</span>
           </div>
           <div className="px-3.5 py-1.5 rounded-full bg-[#0e141f] border border-slate-800 flex items-center gap-2 shadow-sm hover:border-purple-500/40 transition-colors">
-            <span className="text-purple-400">🤖</span>
+            <Bot className="w-3.5 h-3.5 text-purple-400" />
             <span>Instant AI Mentor</span>
           </div>
         </div>
@@ -466,7 +460,6 @@ export const LearnCatalog = () => {
         </div>
       </div>
 
-
       {/* 2. BRING YOUR OWN APPLICATION (BYOA) PLAYGROUND BANNER */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#0d121f] to-slate-950 border border-purple-500/30 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center gap-4">
@@ -534,15 +527,15 @@ export const LearnCatalog = () => {
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/60">
           <span className="text-xs font-mono text-slate-400 mr-1">Filter Track:</span>
           {[
-            { id: 'All', label: 'All Topics' },
-            { id: 'Troubleshooting', label: '🔥 6 Live Troubleshooting Labs' },
-            { id: 'Basics', label: 'Kubernetes Basics (Roadmap)' },
-            { id: 'Configuration', label: 'Configuration (Roadmap)' },
+            { id: 'All', label: 'All 10 Practice Topics' },
+            { id: 'Troubleshooting', label: 'Troubleshooting Labs (6)' },
+            { id: 'Basics', label: 'Kubernetes Basics (3)' },
+            { id: 'Configuration', label: 'Configuration (1)' },
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategoryTab(cat.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all border ${
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all border cursor-pointer ${
                 selectedCategoryTab === cat.id
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold shadow-sm'
                   : 'bg-[#111722] text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
@@ -554,85 +547,92 @@ export const LearnCatalog = () => {
         </div>
       </div>
 
-      {/* 4. PRIMARY SECTION: 6 LIVE TROUBLESHOOTING LABS (FIRST & PROMINENT) */}
+      {/* 4. PRIMARY PRACTICE TRACKS (10 LIVE LABS ACROSS 3 CATEGORIES) */}
       {loading ? (
         <div className="py-16">
           <LoadingSpinner label="Loading practice catalog..." size="lg" />
         </div>
       ) : (
         <div className="space-y-12">
-          {/* A. LIVE TROUBLESHOOTING TRACK */}
-          {liveCategory && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                    <Wrench className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black text-white font-mono tracking-tight">
-                        Live Troubleshooting Labs
-                      </h2>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
-                        ● 6 Live Labs Active
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Investigate live failures with simulated CLI terminal, Monaco YAML editor, and authoritative validation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <PracticeCategory
-                category={liveCategory}
-                masteryMap={masteryMap}
-                onStartLab={handleStartLab}
-                onViewDetails={handleViewDetails}
-              />
-            </div>
-          )}
-
-          {/* B. FUTURE SCOPE & UPCOMING ROADMAP */}
-          {futureCategories.length > 0 && (
-            <div className="space-y-6 pt-6 border-t border-slate-800/80">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-400">
-                    <Compass className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-slate-200 font-mono tracking-tight">
-                        Planned Practice Roadmap (Future Scope)
-                      </h2>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                        In Active Curriculum Design
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Foundation practice modules scheduled for subsequent releases.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-8">
-                {futureCategories.map((category) => (
-                  <PracticeCategory
-                    key={category.categoryId}
-                    category={category}
-                    masteryMap={masteryMap}
-                    onStartLab={handleStartLab}
-                    onViewDetails={handleViewDetails}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          {filteredCatalog.map((category) => (
+            <PracticeCategory
+              key={category.categoryId}
+              category={category}
+              masteryMap={masteryMap}
+              onStartLab={handleStartLab}
+              onViewDetails={handleViewDetails}
+            />
+          ))}
         </div>
       )}
+
+      {/* 5. ZERO SETUP • RUNS DIRECTLY IN YOUR BROWSER CALLOUT SECTION (AT THE END OF LANDING PAGE) */}
+      <div className="relative overflow-hidden rounded-3xl bg-[#06090f]/90 border border-slate-800/90 p-8 sm:p-12 shadow-2xl mt-14">
+        {/* Subtle radial emerald glow */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[450px] h-[300px] bg-emerald-500/10 rounded-full blur-[110px] pointer-events-none" />
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left Column: Typography + Button */}
+          <div className="lg:col-span-6 space-y-4 text-left">
+            <p className="text-[11px] sm:text-xs font-mono font-bold uppercase tracking-[0.25em] text-slate-400">
+              ZERO SETUP &bull; RUNS IN YOUR BROWSER
+            </p>
+
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.12]">
+              Live Kubernetes sandboxes. <br />
+              Right in your browser.
+            </h2>
+
+            <p className="text-sm sm:text-base text-slate-400 font-normal leading-relaxed max-w-lg">
+              Real pods, native <code className="text-emerald-400 font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">kubectl</code> shell, and instant automated grading.
+            </p>
+
+            <div className="pt-2">
+              <button
+                onClick={scrollToLabs}
+                className="px-6 py-3 rounded-full bg-[#10b981] hover:bg-[#059669] text-black font-black text-xs sm:text-sm transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2 active:scale-95 cursor-pointer"
+              >
+                <span>Start practicing</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Interactive Terminal Preview Box */}
+          <div className="lg:col-span-6">
+            <div className="rounded-2xl bg-[#03060a] border border-slate-800 shadow-2xl overflow-hidden text-left font-mono">
+              {/* Header Bar with 3 dots */}
+              <div className="px-4 py-3 bg-[#080d14] border-b border-slate-800/80 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  SANDBOX TERMINAL
+                </span>
+              </div>
+
+              {/* Terminal Code Body */}
+              <div className="p-5 text-xs sm:text-sm space-y-2 text-slate-300">
+                <div className="text-emerald-400 font-bold">
+                  $ kubementor start crash-loop-backoff
+                </div>
+                <div className="text-slate-400">
+                  &rarr; booting fresh isolated k8s cluster.. ok
+                </div>
+                <div className="text-slate-400">
+                  &rarr; provisioning pod failure drills.. 10 live pods
+                </div>
+                <div className="text-slate-200 flex items-center gap-1 pt-1">
+                  <span className="text-emerald-400">learner@kubementor-k8s:~$</span>
+                  <span className="w-2 h-4 bg-emerald-400 inline-block animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* MISSION DETAILS MODAL */}
       <Modal

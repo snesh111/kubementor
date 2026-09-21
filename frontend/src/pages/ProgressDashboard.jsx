@@ -18,6 +18,7 @@ import {
   Activity,
   Flame,
   Star,
+  Play,
 } from 'lucide-react';
 import progressService from '../services/progressService';
 import Card from '../components/common/Card';

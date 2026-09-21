@@ -274,7 +274,7 @@ export const ScenarioWorkbench = ({
                   }`}
                 >
                   <div className="font-bold mb-1 flex items-center gap-1.5">
-                    {validationResult.passed ? '🎉 Scenario Solved!' : '❌ Checks Failed'}
+                    {validationResult.passed ? 'Scenario Solved!' : 'Checks Failed'}
                   </div>
                   <p>{validationResult.message || (validationResult.passed ? 'All pods restored and running healthy.' : 'Validation checks failed. Inspect container status and logs.')}</p>
                 </div>

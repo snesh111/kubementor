@@ -28,6 +28,7 @@ export const WorkspaceHeader = ({
   onValidateSolution,
   isValidating,
   validationResult,
+  isLabStarted = false,
 }) => {
   const navigate = useNavigate();
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -36,11 +37,12 @@ export const WorkspaceHeader = ({
   const [secondsRemaining, setSecondsRemaining] = useState(3600);
 
   useEffect(() => {
+    if (!isLabStarted) return;
     const timer = setInterval(() => {
       setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isLabStarted]);
 
   const formatTimer = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -107,14 +109,22 @@ export const WorkspaceHeader = ({
             title="Click to view Sandbox architecture and 1-hour session duration details"
             className="hidden lg:flex items-center gap-2 bg-slate-950 hover:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 text-xs font-mono transition-all group cursor-pointer"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isLabStarted ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+              }`}
+            ></span>
             <span className="text-slate-300 font-semibold group-hover:text-cyan-300 transition-colors">
               {mode === 'kubernetes' ? 'Live K8s' : 'Sandbox'}
             </span>
             <span className="text-slate-700">|</span>
-            <span className="flex items-center gap-1 text-amber-400 font-medium">
-              <Clock className="w-3 h-3 text-amber-400/80" />
-              <span>{formatTimer(secondsRemaining)}</span>
+            <span
+              className={`flex items-center gap-1 font-medium ${
+                isLabStarted ? 'text-amber-400' : 'text-slate-400'
+              }`}
+            >
+              <Clock className="w-3 h-3 text-current opacity-80" />
+              <span>{isLabStarted ? formatTimer(secondsRemaining) : '60:00 (Idle)'}</span>
             </span>
             <Info className="w-3 h-3 text-slate-500 group-hover:text-cyan-400 transition-colors ml-0.5" />
           </button>

@@ -179,19 +179,6 @@ export const Header = () => {
             Playground
           </NavLink>
 
-          <NavLink
-            to="/progress"
-            className={({ isActive }) =>
-              `transition-all px-3 py-1.5 rounded-lg text-xs font-semibold hidden md:block ${
-                isActive
-                  ? 'bg-[#141b26] border border-slate-700/80 text-white font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-              }`
-            }
-          >
-            Roadmap
-          </NavLink>
-
           {/* Dark/Light Toggle Icon */}
           <button
             type="button"
@@ -210,7 +197,7 @@ export const Header = () => {
                 className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center border border-emerald-400/40 shadow-sm">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
                 </div>
               </button>
 
@@ -218,11 +205,13 @@ export const Header = () => {
                 <div className="absolute right-0 mt-2 w-52 bg-[#0c1017] border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
                   <div className="px-3.5 py-2 border-b border-slate-800">
                     <p className="text-xs font-bold text-white leading-tight truncate">
-                      {user?.name || 'Kubernetes Learner'}
+                      {user?.name || (user?.email ? user.email.split('@')[0] : 'Kubernetes Learner')}
                     </p>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                      {user?.email || 'learner@kubementor.io'}
-                    </p>
+                    {user?.email && (
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                        {user.email}
+                      </p>
+                    )}
                   </div>
 
                   <NavLink

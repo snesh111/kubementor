@@ -7,6 +7,7 @@ import WorkspaceLabPane from '../components/workspace/WorkspaceLabPane';
 import ValidationModal from '../components/workspace/ValidationModal';
 import PostMortemModal from '../components/workspace/PostMortemModal';
 import useLabWorkspace, { PROVISIONING_STEPS } from '../hooks/useLabWorkspace';
+import { getScenarioSteps } from '../data/scenarioStepsData';
 import labService from '../services/labService';
 import Button from '../components/common/Button';
 import {
@@ -25,11 +26,11 @@ export const LabWorkspace = () => {
 
   const {
     session,
-    isProvisioning,
-    provisioningStep,
+    isLabStarted,
+    isStartingLab,
     isResetting,
     error,
-    startOrResumeLab,
+    startLabAction,
     resetLab,
   } = useLabWorkspace(labId);
 
@@ -153,35 +154,35 @@ export const LabWorkspace = () => {
     }
   };
 
-  // Fallback scenario data if not yet loaded from session
-  const activeScenario = session
-    ? {
-        scenarioId: session.labId,
-        name: session.title,
-        difficulty: session.difficulty,
-        category: 'Troubleshooting',
-        expectedFailure: session.mission?.expectedFailure,
-        description: session.mission?.description,
-        concept: session.concept,
-        objective: session.mission?.objective,
-      }
-    : null;
+  // Scenario metadata from session or default steps data
+  const scenarioSteps = getScenarioSteps(labId || 'crash-loop-backoff');
+  const activeScenario = {
+    scenarioId: session?.labId || labId,
+    name: session?.title || scenarioSteps?.name || labId,
+    difficulty: session?.difficulty || 'Beginner',
+    category: 'Troubleshooting',
+    expectedFailure: session?.mission?.expectedFailure || scenarioSteps?.steps?.[0]?.subtitle,
+    description: session?.mission?.description || scenarioSteps?.concept,
+    concept: session?.concept || scenarioSteps?.concept,
+    objective: session?.mission?.objective || 'Investigate and resolve the Kubernetes workload failure.',
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#000000] text-slate-100 overflow-hidden select-none">
       {/* 1. TOP WORKSPACE HEADER */}
       <WorkspaceHeader
-        scenarioName={session?.title || labId}
-        difficulty={session?.difficulty || 'Beginner'}
+        scenarioName={session?.title || activeScenario.name}
+        difficulty={session?.difficulty || activeScenario.difficulty}
         mode={session?.mode || 'simulation'}
         namespace={session?.namespace}
         isNavCollapsed={isNavCollapsed}
         onToggleNav={() => setIsNavCollapsed(!isNavCollapsed)}
-        onResetLab={session ? handleResetLab : null}
+        onResetLab={isLabStarted ? handleResetLab : null}
         isResetting={isResetting}
-        onValidateSolution={session ? handleValidateSolution : null}
+        onValidateSolution={isLabStarted ? handleValidateSolution : null}
         isValidating={isValidating}
         validationResult={validationResult}
+        isLabStarted={isLabStarted}
       />
 
       {/* Mobile/Tablet View Switcher Bar */}
@@ -212,204 +213,110 @@ export const LabWorkspace = () => {
         </button>
       </div>
 
-      {/* 2. MAIN WORKSPACE OR PROVISIONING OVERLAY */}
-      {error || !session || isProvisioning ? (
-        <div className="flex-1 flex items-center justify-center p-6 bg-[#000000] relative overflow-hidden">
-          {/* Subtle glowing background aura */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div className="max-w-md w-full bg-[#080d14] border border-[#1e293b] rounded-2xl p-6 shadow-2xl backdrop-blur-sm space-y-6 relative z-10 font-sans">
-            <div className="flex items-center gap-3 border-b border-[#1e293b] pb-4">
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <Server className="w-5 h-5 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-100 font-mono">
-                  Preparing Practice Lab
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Provisioning dedicated tenant environment
-                </p>
-              </div>
-            </div>
-
-            {/* Error state */}
-            {error ? (
-              <div className="space-y-4">
-                <div className="p-3.5 bg-rose-950/30 border border-rose-500/30 rounded-xl flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 text-xs">
-                    <span className="font-bold text-rose-300 font-mono">Provisioning Error</span>
-                    <p className="text-rose-200/80 leading-relaxed">{error}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="secondary" size="sm" onClick={() => navigate('/learn')}>
-                    Back to Catalog
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={startOrResumeLab}>
-                    <RotateCcw className="w-3.5 h-3.5" /> Retry Lab
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              /* Step-by-step progress checklist */
-              <div className="space-y-4">
-                <div className="space-y-2.5">
-                  {PROVISIONING_STEPS.map((step) => {
-                    const isDone = provisioningStep > step.id;
-                    const isCurrent = provisioningStep === step.id;
-
-                    return (
-                      <div
-                        key={step.id}
-                        className={`flex items-start gap-3 p-2.5 rounded-xl border transition-all ${
-                          isDone
-                            ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300'
-                            : isCurrent
-                            ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200 shadow-sm'
-                            : 'bg-slate-950/40 border-slate-800/60 text-slate-500 opacity-60'
-                        }`}
-                      >
-                        <div className="mt-0.5 shrink-0">
-                          {isDone ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          ) : isCurrent ? (
-                            <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[9px] font-mono">
-                              {step.id}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs font-semibold block truncate">
-                            {step.label}
-                          </span>
-                          <span className="text-[10px] text-slate-400 block truncate">
-                            {step.desc}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2 text-center">
-                  <span className="text-[11px] font-mono text-slate-400 flex items-center justify-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                    Zero setup required • Sandbox isolation active
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        /* 3. MAIN 3-PANE WORKSPACE BODY */
-        <div ref={splitContainerRef} className="flex-1 flex overflow-hidden relative select-none">
-          {/* LEFT PANE — PRACTICE NAVIGATION ROADMAP & TOPICS */}
-          {!isNavCollapsed && (
-            <div className="w-56 sm:w-64 shrink-0 h-full transition-all duration-200 ease-in-out border-r border-[#1e293b]/80">
-              <WorkspaceNavPane
-                activeLabId={labId}
-                session={session}
-                validationResult={validationResult}
-                activeStepIndex={activeStepIndex}
-                onSelectStep={setActiveStepIndex}
-                completedSteps={completedSteps}
-                onSelectLab={handleSelectLab}
-              />
-            </div>
-          )}
-
-          {/* CENTER PANE — MISSION & LEARNING CONTENT (Dynamic Width) */}
-          <div
-            style={{ width: `${splitPercent}%` }}
-            className={`overflow-hidden shrink-0 h-full ${
-              isDraggingSplit ? '' : 'transition-[width] duration-150 ease-out'
-            } ${
-              mobileActiveView === 'workbench' ? 'hidden lg:block' : 'block'
-            } ${splitPercent <= 1 ? 'hidden' : ''}`}
-          >
-            <WorkspaceMissionPane
-              scenarioId={labId}
-              scenario={activeScenario}
+      {/* 2. MAIN 3-PANE WORKSPACE BODY */}
+      <div ref={splitContainerRef} className="flex-1 flex overflow-hidden relative select-none">
+        {/* LEFT PANE — PRACTICE NAVIGATION ROADMAP & TOPICS */}
+        {!isNavCollapsed && (
+          <div className="w-56 sm:w-64 shrink-0 h-full transition-all duration-200 ease-in-out border-r border-[#1e293b]/80">
+            <WorkspaceNavPane
+              activeLabId={labId}
+              session={session}
+              validationResult={validationResult}
               activeStepIndex={activeStepIndex}
               onSelectStep={setActiveStepIndex}
               completedSteps={completedSteps}
-              onMarkStepCompleted={handleMarkStepCompleted}
-              onValidateSolution={handleValidateSolution}
-              isValidating={isValidating}
-              validationResult={validationResult}
-              onSelectWorkbenchTab={setActiveWorkbenchTab}
+              onSelectLab={handleSelectLab}
             />
           </div>
+        )}
 
-          {/* DRAGGABLE VERTICAL SPLIT DIVIDER BAR */}
+        {/* CENTER PANE — MISSION & LEARNING CONTENT (Dynamic Width) */}
+        <div
+          style={{ width: `${splitPercent}%` }}
+          className={`overflow-hidden shrink-0 h-full ${
+            isDraggingSplit ? '' : 'transition-[width] duration-150 ease-out'
+          } ${
+            mobileActiveView === 'workbench' ? 'hidden lg:block' : 'block'
+          } ${splitPercent <= 1 ? 'hidden' : ''}`}
+        >
+          <WorkspaceMissionPane
+            scenarioId={labId}
+            scenario={activeScenario}
+            activeStepIndex={activeStepIndex}
+            onSelectStep={setActiveStepIndex}
+            completedSteps={completedSteps}
+            onMarkStepCompleted={handleMarkStepCompleted}
+            onValidateSolution={handleValidateSolution}
+            isValidating={isValidating}
+            validationResult={validationResult}
+            onSelectWorkbenchTab={setActiveWorkbenchTab}
+          />
+        </div>
+
+        {/* DRAGGABLE VERTICAL SPLIT DIVIDER BAR */}
+        <div
+          onMouseDown={handleMouseDown}
+          onDoubleClick={handleResetSplit}
+          title="Drag to resize panes • Double click to center (50/50)"
+          className={`hidden lg:flex w-2 shrink-0 h-full bg-[#05080e] hover:bg-emerald-500/30 active:bg-emerald-500/50 cursor-col-resize z-20 items-center justify-center relative select-none transition-colors group ${
+            isDraggingSplit ? 'bg-emerald-500/50' : ''
+          }`}
+        >
+          {/* Split border line */}
           <div
-            onMouseDown={handleMouseDown}
-            onDoubleClick={handleResetSplit}
-            title="Drag to resize panes • Double click to center (50/50)"
-            className={`hidden lg:flex w-2 shrink-0 h-full bg-[#05080e] hover:bg-emerald-500/30 active:bg-emerald-500/50 cursor-col-resize z-20 items-center justify-center relative select-none transition-colors group ${
-              isDraggingSplit ? 'bg-emerald-500/50' : ''
+            className={`w-[1px] h-full ${
+              isDraggingSplit ? 'bg-emerald-400' : 'bg-[#1e293b] group-hover:bg-emerald-500/70'
+            }`}
+          />
+
+          {/* Centered grip handle pill */}
+          <div
+            className={`absolute top-1/2 -translate-y-1/2 w-4 h-9 rounded-full border flex items-center justify-center transition-all ${
+              isDraggingSplit
+                ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.8)] scale-110'
+                : 'bg-[#080d14] border-slate-750 text-slate-400 group-hover:border-emerald-400 group-hover:text-emerald-400 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.4)]'
             }`}
           >
-            {/* Split border line */}
-            <div
-              className={`w-[1px] h-full ${
-                isDraggingSplit ? 'bg-emerald-400' : 'bg-[#1e293b] group-hover:bg-emerald-500/70'
-              }`}
-            />
-
-            {/* Centered grip handle pill */}
-            <div
-              className={`absolute top-1/2 -translate-y-1/2 w-4 h-9 rounded-full border flex items-center justify-center transition-all ${
-                isDraggingSplit
-                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.8)] scale-110'
-                  : 'bg-[#080d14] border-slate-750 text-slate-400 group-hover:border-emerald-400 group-hover:text-emerald-400 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-              }`}
-            >
-              <GripVertical className="w-3 h-3" />
-            </div>
-
-            {/* Split Percent floating badge during active drag */}
-            {isDraggingSplit && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-[#000000] border border-emerald-400 text-emerald-300 font-mono text-[10px] font-bold shadow-2xl pointer-events-none whitespace-nowrap z-30 flex items-center gap-1.5">
-                <span>{Math.round(splitPercent)}% Briefing</span>
-                <span className="text-slate-500">•</span>
-                <span>{Math.round(100 - splitPercent)}% Workbench</span>
-              </div>
-            )}
+            <GripVertical className="w-3 h-3" />
           </div>
 
-          {/* RIGHT PANE — LAB WORKBENCH TABS (Terminal | Editor | Scratchpad | AI Mentor) */}
-          <div
-            style={{ width: splitPercent <= 1 ? '100%' : `${100 - splitPercent}%` }}
-            className={`overflow-hidden flex-1 h-full ${
-              isDraggingSplit ? '' : 'transition-[width] duration-150 ease-out'
-            } ${
-              mobileActiveView === 'mission' ? 'hidden lg:block' : 'block'
-            }`}
-          >
-            <WorkspaceLabPane
-              scenario={activeScenario}
-              session={session}
-              activeTab={activeWorkbenchTab}
-              onSelectTab={setActiveWorkbenchTab}
-              splitPercent={splitPercent}
-              onSetSplitPercent={setSplitPercent}
-            />
-          </div>
-
-          {/* Mouse event shield during dragging */}
+          {/* Split Percent floating badge during active drag */}
           {isDraggingSplit && (
-            <div className="absolute inset-0 z-30 cursor-col-resize pointer-events-auto bg-transparent" />
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-[#000000] border border-emerald-400 text-emerald-300 font-mono text-[10px] font-bold shadow-2xl pointer-events-none whitespace-nowrap z-30 flex items-center gap-1.5">
+              <span>{Math.round(splitPercent)}% Briefing</span>
+              <span className="text-slate-500">•</span>
+              <span>{Math.round(100 - splitPercent)}% Workbench</span>
+            </div>
           )}
         </div>
-      )}
+
+        {/* RIGHT PANE — LAB WORKBENCH TABS (Terminal | Editor | Scratchpad | AI Mentor) */}
+        <div
+          style={{ width: splitPercent <= 1 ? '100%' : `${100 - splitPercent}%` }}
+          className={`overflow-hidden flex-1 h-full ${
+            isDraggingSplit ? '' : 'transition-[width] duration-150 ease-out'
+          } ${
+            mobileActiveView === 'mission' ? 'hidden lg:block' : 'block'
+          }`}
+        >
+          <WorkspaceLabPane
+            scenario={activeScenario}
+            session={session}
+            activeTab={activeWorkbenchTab}
+            onSelectTab={setActiveWorkbenchTab}
+            splitPercent={splitPercent}
+            onSetSplitPercent={setSplitPercent}
+            isLabStarted={isLabStarted}
+            onStartLab={startLabAction}
+            isStartingLab={isStartingLab}
+          />
+        </div>
+
+        {/* Mouse event shield during dragging */}
+        {isDraggingSplit && (
+          <div className="absolute inset-0 z-30 cursor-col-resize pointer-events-auto bg-transparent" />
+        )}
+      </div>
 
       {/* SOLUTION VALIDATION MODAL */}
       <ValidationModal

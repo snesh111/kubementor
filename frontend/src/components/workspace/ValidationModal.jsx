@@ -133,7 +133,7 @@ export const ValidationModal = ({
                   </div>
                   {result.nextAction && (
                     <p className="text-xs opacity-90 leading-relaxed font-mono">
-                      💡 {result.nextAction}
+                      {result.nextAction}
                     </p>
                   )}
                 </div>
@@ -243,7 +243,7 @@ export const ValidationModal = ({
                     className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold flex items-center gap-2 shadow-lg shadow-emerald-600/20"
                   >
                     <BookOpen className="w-4 h-4" />
-                    <span>View Guided Post-Mortem</span>
+                    <span>View Solution Review</span>
                   </Button>
                 </>
               ) : (

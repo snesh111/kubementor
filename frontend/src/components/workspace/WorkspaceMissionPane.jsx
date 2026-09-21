@@ -461,7 +461,7 @@ export const WorkspaceMissionPane = ({
                   {quizAnswers[currentStep.id || activeStepIndex] === currentStep.correctIndex ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span className="text-emerald-400">Correct! 🎯</span>
+                      <span className="text-emerald-400">Correct!</span>
                     </>
                   ) : (
                     <>
@@ -525,7 +525,7 @@ export const WorkspaceMissionPane = ({
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-slate-950" />
-                    <span>Run Validation Check 🚀</span>
+                    <span>Run Validation Check</span>
                   </>
                 )}
               </button>
@@ -546,7 +546,7 @@ export const WorkspaceMissionPane = ({
                       <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                     )}
                     <span className="font-bold">
-                      {validationResult.status === 'PASS' ? 'Scenario Solved! 🎉' : 'Checks Failed'}
+                      {validationResult.status === 'PASS' ? 'Scenario Solved!' : 'Checks Failed'}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-400">
@@ -619,7 +619,7 @@ export const WorkspaceMissionPane = ({
             disabled={isValidating}
             className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-mono font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer disabled:opacity-50"
           >
-            <span>Validate Fix 🚀</span>
+            <span>Validate Fix</span>
           </button>
         ) : (
           <button

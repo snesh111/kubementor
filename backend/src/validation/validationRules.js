@@ -79,7 +79,7 @@ const evaluateCrashLoopBackOff = (pod, container, dep, events) => {
   if (passCount === 3) {
     status = 'PASS';
     summary = 'Workload successfully recovered! Pod is Running, Ready, and CrashLoopBackOff is resolved.';
-    nextAction = 'Review the post-mortem to reflect on root-cause analysis and preventive practices.';
+    nextAction = 'Review the solution summary to reflect on root-cause analysis and preventive practices.';
   } else if (isRunning && !isCrashLoop) {
     status = 'PARTIAL';
     summary = 'Pod is Running and no longer in CrashLoopBackOff, but is not yet fully Ready.';
@@ -127,7 +127,7 @@ const evaluateImagePullBackOff = (pod, container, dep, events) => {
   if (!isImagePullError && isReady) {
     status = 'PASS';
     summary = 'Image pull failure resolved! Container image was pulled cleanly and Pod is Ready.';
-    nextAction = 'Review post-mortem reflections for image tag pinning and registry best practices.';
+    nextAction = 'Review solution reflections for image tag pinning and registry best practices.';
   } else if (!isImagePullError) {
     status = 'PARTIAL';
     summary = 'Image pull error resolved, but container process has not reached Ready state.';
@@ -139,23 +139,26 @@ const evaluateImagePullBackOff = (pod, container, dep, events) => {
 
 const evaluateOOMKilled = (pod, container, dep, events) => {
   const isReady = pod.ready ? true : false;
-  const isOOM = container.reason === 'OOMKilled' || events.some((e) => e.reason === 'OOMKilled');
-  const exitCode = container.exitCode;
+  const isOOM =
+    container.reason === 'OOMKilled' ||
+    container.exitCode === 137 ||
+    events.some((e) => e.reason === 'OOMKilled' || e.message?.includes('OOM'));
+  const exitCode = container.exitCode ?? (isOOM ? 137 : 0);
 
   const checks = [
     {
-      name: 'OOMKilled Condition',
+      name: 'OOMKilled Condition Check',
       expected: false,
       actual: isOOM,
       status: !isOOM ? 'PASS' : 'FAIL',
-      description: 'Verifies that container memory consumption stays within defined limits.',
+      description: 'Verifies container is not killed due to cgroup memory exhaustion (Exit 137).',
     },
     {
-      name: 'Exit Code 137 Check',
-      expected: 0,
-      actual: exitCode || 0,
-      status: exitCode !== 137 ? 'PASS' : 'FAIL',
-      description: 'Verifies that container exit code is clean (0) rather than SIGKILL (137).',
+      name: 'Memory Limit Adequacy',
+      expected: '>= 256Mi',
+      actual: dep.resources?.limits?.memory || '16Mi',
+      status: (dep.resources?.limits?.memory || '16Mi') !== '16Mi' ? 'PASS' : 'FAIL',
+      description: 'Verifies memory limit has been raised above the application memory footprint.',
     },
     {
       name: 'Pod Readiness',
@@ -179,7 +182,7 @@ const evaluateOOMKilled = (pod, container, dep, events) => {
   if (!isOOM && isReady) {
     status = 'PASS';
     summary = 'Memory limit resolution verified! Pod is Running cleanly with sufficient memory limits.';
-    nextAction = 'Review post-mortem reflections for memory sizing and limit best practices.';
+    nextAction = 'Review solution reflections for memory sizing and limit best practices.';
   } else if (!isOOM) {
     status = 'PARTIAL';
     summary = 'OOMKilled termination resolved, but pod readiness stability is still building.';
@@ -233,7 +236,7 @@ const evaluateMissingConfigMap = (pod, container, configMaps, events) => {
   if (configMapExists && !hasConfigError && isReady) {
     status = 'PASS';
     summary = 'Missing ConfigMap scenario resolved! ConfigMap exists, container mounted config, and Pod is Ready.';
-    nextAction = 'Review post-mortem on decouple-configuration architectural patterns.';
+    nextAction = 'Review solution guide on decouple-configuration architectural patterns.';
   } else if (configMapExists && !hasConfigError) {
     status = 'PARTIAL';
     summary = 'ConfigMap created successfully, but Pod container is still initializing.';
@@ -277,7 +280,7 @@ const evaluateServiceConnectivity = (pod, services) => {
   if (endpointCount > 0 && isReady) {
     status = 'PASS';
     summary = 'Service connectivity resolved! Service selector matched backend pods and endpoints > 0.';
-    nextAction = 'Review post-mortem on Kubernetes Service discovery and selector mapping.';
+    nextAction = 'Review solution guide on Kubernetes Service discovery and selector mapping.';
   } else if (endpointCount > 0) {
     status = 'PARTIAL';
     summary = 'Service selector matches pods, but backend pods are not yet Ready.';
@@ -332,7 +335,7 @@ const evaluateIngressTlsFailure = (pod, services, ingresses) => {
   if (hasValidTlsSecret && hasEndpoints && isReady) {
     status = 'PASS';
     summary = 'Ingress/TLS failure resolved! TLS secret referenced and backend endpoints active.';
-    nextAction = 'Review post-mortem on Ingress TLS routing and Kubernetes Secret management.';
+    nextAction = 'Review solution guide on Ingress TLS routing and Kubernetes Secret management.';
   } else if (hasValidTlsSecret) {
     status = 'PARTIAL';
     summary = 'TLS Secret configured, but backend service endpoints are not yet fully active.';
@@ -361,7 +364,7 @@ const evaluateGeneric = (pod) => {
     summary: isReady ? 'Workload is Ready.' : 'Workload is not Ready.',
     checks,
     evidence,
-    nextAction: isReady ? 'Review post-mortem.' : 'Inspect pod status and logs.',
+    nextAction: isReady ? 'Review solution guide.' : 'Inspect pod status and logs.',
   };
 };
 

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProfileThunk } from './redux/slices/authSlice';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -20,6 +22,14 @@ import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 
 export const App = () => {
+  const dispatch = useDispatch();
+  const { token, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (token && !user) {
+      dispatch(fetchProfileThunk());
+    }
+  }, [token, user, dispatch]);
   return (
     <Routes>
       {/* Full-screen Interactive Lab Workspace (Protected) */}

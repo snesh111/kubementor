@@ -33,14 +33,14 @@ export const PostMortemModal = ({ isOpen, onClose, postMortem, onEditScratchpad 
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  Post-Mortem Review
+                  Solution Review
                 </span>
                 <span className="text-xs text-slate-400 font-mono">
                   {postMortem.scenarioId}
                 </span>
               </div>
               <h2 className="text-base font-bold text-slate-100 font-mono mt-0.5">
-                {postMortem.scenarioName || 'Kubernetes Troubleshooting Post-Mortem'}
+                {postMortem.scenarioName || 'Kubernetes Troubleshooting Solution Review'}
               </h2>
             </div>
           </div>
@@ -72,7 +72,7 @@ export const PostMortemModal = ({ isOpen, onClose, postMortem, onEditScratchpad 
                 Root-Cause Investigation Summary
               </span>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Review this guided post-mortem to consolidate the lessons learned during this troubleshooting session.
+                Review this guided summary to consolidate the lessons learned during this troubleshooting session.
               </p>
             </div>
             <div className="text-right font-mono text-xs text-slate-400 shrink-0">

@@ -144,7 +144,7 @@ const TRACK_DETAILS = {
     steps: [
       {
         stepNum: 1,
-        code: '01',
+        code: '07',
         id: 'topic-pods',
         title: 'Pods & Multi-Container Pods',
         concepts: '3 concepts',
@@ -157,29 +157,62 @@ const TRACK_DETAILS = {
       },
       {
         stepNum: 2,
-        code: '02',
+        code: '08',
         id: 'topic-deployments',
         title: 'Deployments & Rolling Updates',
         concepts: '3 concepts',
         tasks: '4 tasks',
         time: '15 min',
-        isFree: false,
-        isLocked: true,
+        isFree: true,
+        isLocked: false,
         icon: Layers,
         desc: 'Declaratively manage replica sets, rolling updates, pod revisions, and rollbacks.',
       },
       {
         stepNum: 3,
-        code: '03',
+        code: '09',
         id: 'topic-services',
         title: 'Services & Cluster Networking',
         concepts: '3 concepts',
         tasks: '4 tasks',
         time: '15 min',
-        isFree: false,
-        isLocked: true,
+        isFree: true,
+        isLocked: false,
         icon: Network,
         desc: 'Expose workloads via ClusterIP, NodePort, and LoadBalancer with selector discovery.',
+      },
+    ],
+  },
+  configuration: {
+    id: 'configuration',
+    title: 'Configuration',
+    icon: FileText,
+    iconColor: 'text-amber-400',
+    description:
+      'Master decoupling runtime configuration and environment variables from container images using ConfigMaps.',
+    stats: {
+      topics: '1 topic',
+      tasks: '4 hands-on tasks',
+      quizzes: '1 validation quiz',
+      time: '~10 min',
+    },
+    certificateReqs: [
+      'Inject configuration parameters via ConfigMap environment variables and volume mounts',
+      'Decouple application settings from container image lifecycles',
+    ],
+    steps: [
+      {
+        stepNum: 1,
+        code: '10',
+        id: 'topic-configmaps',
+        title: 'ConfigMaps & Environment Injection',
+        concepts: '3 concepts',
+        tasks: '4 tasks',
+        time: '10 min',
+        isFree: true,
+        isLocked: false,
+        icon: FileText,
+        desc: 'Inject configuration key-value pairs, property files, and mounted volumes into running containers.',
       },
     ],
   },
@@ -349,11 +382,11 @@ export const TopicRoadmap = () => {
 
                 {/* Sub-meta details */}
                 <div className="flex items-center gap-3 text-[11px] font-mono text-slate-400 mt-3 pt-2.5 border-t border-slate-800/60">
-                  <span>▶ {step.concepts}</span>
+                  <span>{step.concepts}</span>
                   <span>•</span>
-                  <span>📋 {step.tasks}</span>
+                  <span>{step.tasks}</span>
                   <span>•</span>
-                  <span>⏱ {step.time}</span>
+                  <span>{step.time}</span>
                 </div>
               </div>
             );

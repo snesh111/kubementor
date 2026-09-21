@@ -47,9 +47,9 @@ const TOPIC_CATEGORIES = [
     title: 'Kubernetes Basics',
     icon: Layers,
     items: [
-      { id: 'topic-pods', code: '07', name: 'Pods & Multi-Container', icon: Box, isLive: false },
-      { id: 'topic-deployments', code: '08', name: 'Deployments & Rollouts', icon: Layers, isLive: false },
-      { id: 'topic-services', code: '09', name: 'Services & Networking', icon: Network, isLive: false },
+      { id: 'topic-pods', code: '07', name: 'Pods & Multi-Container', icon: Box, isLive: true },
+      { id: 'topic-deployments', code: '08', name: 'Deployments & Rollouts', icon: Layers, isLive: true },
+      { id: 'topic-services', code: '09', name: 'Services & Networking', icon: Network, isLive: true },
     ],
   },
   {
@@ -57,8 +57,7 @@ const TOPIC_CATEGORIES = [
     title: 'Configuration',
     icon: Layers,
     items: [
-      { id: 'topic-configmaps', code: '10', name: 'ConfigMaps & Env Injection', icon: FileText, isLive: false },
-      { id: 'topic-secrets', code: '11', name: 'Secrets & TLS Keys', icon: KeyRound, isLive: false },
+      { id: 'topic-configmaps', code: '10', name: 'ConfigMaps & Env Injection', icon: FileText, isLive: true },
     ],
   },
 ];
@@ -96,7 +95,7 @@ export const WorkspaceNavPane = ({
   const completedStepsCount = completedSteps.length;
   const progressPercent = isPassed
     ? 100
-    : Math.round((Math.max(completedStepsCount, activeStepIndex) / totalSteps) * 100);
+    : Math.round((completedStepsCount / totalSteps) * 100);
 
   const steps = rawSteps.map((step, idx) => {
     const isStepDone = isPassed || completedSteps.includes(idx);
@@ -130,7 +129,7 @@ export const WorkspaceNavPane = ({
             <span>Active Scenario</span>
           </button>
           <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
-            6 Live Labs
+            10 Live Labs
           </span>
         </div>
 
@@ -314,10 +313,10 @@ export const WorkspaceNavPane = ({
                 key={idx}
                 type="button"
                 onClick={() => handleStepClick(idx)}
-                className={`w-full text-left p-2 rounded-xl flex items-start gap-3 transition-all relative group cursor-pointer ${
+                className={`w-full text-left p-2 rounded-xl flex items-start gap-3 transition-colors duration-150 relative group cursor-pointer border ${
                   step.isActive
-                    ? 'bg-emerald-500/10 text-white border border-emerald-500/40 shadow-sm'
-                    : 'hover:bg-slate-900/60 text-slate-300'
+                    ? 'bg-emerald-500/10 text-white border-emerald-500/40 shadow-sm'
+                    : 'border-transparent hover:bg-slate-900/60 text-slate-300'
                 }`}
               >
                 {/* Step Node Marker Icon */}
