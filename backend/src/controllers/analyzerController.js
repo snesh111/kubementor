@@ -39,3 +39,15 @@ export const getAnalysisReportById = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, 'Analysis report retrieved successfully', { report }, 200);
 });
+
+/**
+ * @desc    Analyze raw YAML manifest or kubectl log snippet (Standalone Analyzer)
+ * @route   POST /api/v1/analyzer/raw
+ * @access  Public / Authenticated
+ */
+export const analyzeRawSnippet = asyncHandler(async (req, res) => {
+  const { content, type } = req.body;
+  const analysis = await analyzerService.analyzeRawSnippet(content, type);
+
+  return ApiResponse.success(res, 'AI analysis completed successfully', { analysis }, 200);
+});

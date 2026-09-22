@@ -5,17 +5,19 @@ import Sidebar from '../components/common/Sidebar';
 import Footer from '../components/common/Footer';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import CosmicSpaceCanvas from '../components/common/CosmicSpaceCanvas';
+import { useTheme } from '../context/ThemeContext';
 
 export const MainLayout = () => {
   const location = useLocation();
+  const { isDarkMode } = useTheme();
   const isFullWidthPage =
     location.pathname === '/' ||
     location.pathname === '/learn' ||
     location.pathname === '/skills';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#000000] text-slate-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 relative">
-      {/* Dynamic Cosmic Space View with Moving Stars & Thor Sparks */}
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#000000] text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-500 relative transition-colors duration-300">
+      {/* Dynamic Cosmic Space View with Moving Stars & Spark Streaks */}
       <CosmicSpaceCanvas />
 
       <Header />

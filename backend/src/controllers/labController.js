@@ -115,7 +115,7 @@ export const getPracticeCatalog = asyncHandler(async (req, res) => {
     },
   ];
 
-  return ApiResponse.success(res, 'Practice catalog retrieved successfully', { catalog }, 200);
+  return ApiResponse.success(res, 'Practice catalog retrieved successfully', { catalog, scenarios: liveScenarios }, 200);
 });
 
 /**

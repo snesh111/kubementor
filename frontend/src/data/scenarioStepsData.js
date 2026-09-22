@@ -14,7 +14,6 @@ export const SCENARIO_STEPS_DATA = {
         type: 'LESSON',
         title: 'What is CrashLoopBackOff',
         subtitle: 'Understanding why containers fail and restart repeatedly',
-        analogy: 'Imagine a computer program that tries to start up, runs into an error, crashes immediately, and keeps rebooting over and over. Kubernetes protects itself by adding a waiting delay between reboots.',
         concept: 'CrashLoopBackOff is a pod state indicating that a container in the pod starts, crashes (terminates with an error), and restarts. To prevent node CPU exhaustion from rapid infinite crashes, Kubelet waits with an increasing exponential back-off delay (10s, 20s, 40s, up to 5 minutes) between restart attempts.',
         flow: [
           { label: 'KUBELET', sub: 'Starts Container', color: 'emerald' },
@@ -149,7 +148,6 @@ export const SCENARIO_STEPS_DATA = {
         type: 'LESSON',
         title: 'What is ImagePullBackOff',
         subtitle: 'Why Kubernetes cannot download the requested container image',
-        analogy: 'Imagine ordering a book from an online warehouse, but you typed a non-existent ISBN number. The delivery driver searches the warehouse shelves, cannot find the book, and waits before trying again.',
         concept: 'ImagePullBackOff means Kubernetes Kubelet attempted to download (pull) the container image specified in your pod manifest from a container registry (like Docker Hub, ECR, GCR, or Quay), but the download failed. Kubelet waits with an increasing exponential back-off delay before retrying.',
         flow: [
           { label: 'KUBELET', sub: 'Pulls Image', color: 'emerald' },
@@ -282,7 +280,6 @@ export const SCENARIO_STEPS_DATA = {
         type: 'LESSON',
         title: 'What is OOMKilled (Exit 137)',
         subtitle: 'Understanding Linux cgroup memory limits in Kubernetes',
-        analogy: 'Imagine pouring 2 liters of water into a 500ml bottle. When the water overflows the brim, the system immediately cuts off the flow to protect the surrounding table.',
         concept: 'OOMKilled (Out Of Memory Killed, exit code 137) occurs when a container attempts to allocate more RAM than allowed by its `resources.limits.memory` limit. The Linux kernel Out-Of-Memory Killer (oom_killer) instantly sends SIGKILL (kill -9) to terminate the container process.',
         flow: [
           { label: 'APP RAM', sub: 'Exceeds Memory Limit', color: 'amber' },
@@ -422,7 +419,6 @@ export const SCENARIO_STEPS_DATA = {
         type: 'LESSON',
         title: 'What is CreateContainerConfigError',
         subtitle: 'Understanding missing configuration dependencies',
-        analogy: 'Imagine a car trying to start, but the ignition key or fuel injection profile is completely missing from the dashboard. The engine cannot start until the key is inserted.',
         concept: 'CreateContainerConfigError occurs when a Pod manifest references a ConfigMap or Secret (via envFrom, valueFrom.configMapKeyRef, or volumes.configMap) that does not exist in the pod\'s namespace or is missing the expected data key.',
         flow: [
           { label: 'POD INIT', sub: 'Reads ConfigMap', color: 'emerald' },
@@ -554,7 +550,6 @@ data:
         type: 'LESSON',
         title: 'What is Service Connectivity Failure',
         subtitle: 'Why Kubernetes Services fail to route traffic to Pods',
-        analogy: 'Imagine a receptionist looking for employees wearing "Blue Shirts" (the Service Selector), but all your workers are wearing "Green Shirts" (Pod Labels). The receptionist has nobody to route incoming phone calls to.',
         concept: 'A Service Connectivity Failure occurs when a Service has a valid IP (ClusterIP), but routes 0 traffic because its label selector (`spec.selector`) does not match the labels on any running Pods (`metadata.labels`), resulting in an empty Endpoints list (<none>).',
         flow: [
           { label: 'CLIENT', sub: 'Requests Service IP', color: 'emerald' },
@@ -688,7 +683,6 @@ spec:
         type: 'LESSON',
         title: 'What is Ingress & TLS Failure',
         subtitle: 'Understanding HTTPS certificate termination in Kubernetes',
-        analogy: 'Imagine setting up a secure vault with an electronic lock, but you forgot to install the encryption key chip inside the lock mechanism. The door refuses to establish a secure handshake.',
         concept: 'Ingress TLS Failure occurs when an Ingress resource specifies TLS termination (`spec.tls`), but the referenced `secretName` containing the SSL certificate (`tls.crt`) and private key (`tls.key`) does not exist in the namespace or is invalid.',
         flow: [
           { label: 'HTTPS REQ', sub: 'Hits Ingress Controller', color: 'emerald' },
@@ -817,7 +811,6 @@ spec:
         type: 'LESSON',
         title: 'What is a Kubernetes Pod',
         subtitle: 'Understanding the atomic scheduling unit in Kubernetes',
-        analogy: 'Think of a Pod like a pea pod containing one or more peas (containers). All containers inside the same Pod share the same home address (IP address) and storage room (volumes).',
         concept: 'A Pod is the smallest deployable unit in Kubernetes. Containers within a Pod share the same network namespace (including IP address and ports) and can communicate via localhost. They can also share mounted storage volumes for inter-process logging or data exchange.',
         flow: [
           { label: 'KUBE-SCHEDULER', sub: 'Schedules Pod to Node', color: 'emerald' },
@@ -951,7 +944,6 @@ web-app   2/2     Running   0          5m    10.244.0.5   node-1`,
         type: 'LESSON',
         title: 'Declarative Deployments & Replicas',
         subtitle: 'Managing stateless application lifecycles at scale',
-        analogy: 'Imagine an automated factory manager. You declare "I always want 3 identical web servers running version 1.2". The manager automatically creates, monitors, and replaces them if any fail.',
         concept: 'A Deployment provides declarative updates for Pods and ReplicaSets. You describe a desired state in a Deployment manifest, and the Deployment Controller changes the actual state to the desired state at a controlled rate.',
         flow: [
           { label: 'DEPLOYMENT', sub: 'Desired: 3 Replicas', color: 'emerald' },
@@ -1074,7 +1066,6 @@ web-app   3/3     3            3           10m`,
         type: 'LESSON',
         title: 'Service Discovery & L4 Networking',
         subtitle: 'How Kubernetes provides stable network endpoints',
-        analogy: 'Think of a Service like a corporate front-desk phone extension. Individual workers (Pods) may change desks or take days off, but calling the extension always routes you to an available person.',
         concept: 'In Kubernetes, Pods are ephemeral and their IP addresses change frequently. A Service is an abstraction that defines a logical set of Pods and a policy to access them via a stable IP address and DNS name.',
         flow: [
           { label: 'CLIENT', sub: 'Requests web-service:80', color: 'emerald' },
@@ -1191,7 +1182,6 @@ web-service   10.244.0.5:80        15m`,
         type: 'LESSON',
         title: 'Decoupling Configuration from Code',
         subtitle: 'Store configuration parameters outside container images',
-        analogy: 'Imagine a universal power adapter. Instead of manufacturing a different laptop for every country, you build one laptop and change the plug adapter (ConfigMap) depending on the environment.',
         concept: 'A ConfigMap is an API object used to store non-confidential data in key-value pairs. Pods can consume ConfigMaps as environment variables, command-line arguments, or as configuration files mounted in a volume.',
         flow: [
           { label: 'CONFIGMAP', sub: 'Key-Value Pairs (APP_ENV)', color: 'emerald' },

@@ -143,21 +143,6 @@ export const WorkspaceMissionPane = ({
         {/* STEP TYPE 1: LESSON / CONCEPT INTRODUCTION */}
         {currentStep.type === 'LESSON' && (
           <div className="space-y-5">
-            {/* Simple Analogy Box */}
-            {currentStep.analogy && (
-              <div className="p-4 rounded-xl bg-[#080d14] border border-cyan-500/30 space-y-1.5 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span className="text-[11px] font-mono uppercase font-bold text-cyan-300 tracking-wider">
-                    Simple Analogy
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {currentStep.analogy}
-                </p>
-              </div>
-            )}
-
             {/* Core Explanation */}
             {currentStep.concept && (
               <div className="space-y-2">

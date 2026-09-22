@@ -21,6 +21,7 @@ router.post('/demo', demoLoginUser);
 
 // Protected routes
 router.get('/profile', authenticate, getProfile);
+router.get('/me', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
 
 export default router;

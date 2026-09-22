@@ -8,6 +8,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get('/', progressController.getProgressSummary);
+router.get('/summary', progressController.getProgressSummary);
 router.get('/scenarios', progressController.getScenarioMastery);
 router.get('/topics', progressController.getTopicProgress);
 router.get('/recent', progressController.getRecentPractice);

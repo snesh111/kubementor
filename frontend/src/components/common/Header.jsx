@@ -18,6 +18,7 @@ import {
   Moon,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
+import { useTheme } from '../../context/ThemeContext';
 import AuthModal from './AuthModal';
 import KubeMentorBrandLogo from './KubeMentorBrandLogo';
 
@@ -35,10 +36,10 @@ const QUICK_SEARCH_ITEMS = [
 export const Header = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const searchRef = useRef(null);
 
@@ -182,11 +183,15 @@ export const Header = () => {
           {/* Dark/Light Toggle Icon */}
           <button
             type="button"
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-1.5 ml-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors cursor-pointer"
-            title="Toggle color theme"
+            onClick={toggleTheme}
+            className="p-1.5 ml-1 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800/60 dark:hover:bg-slate-900 transition-all cursor-pointer group"
+            title={isDarkMode ? 'Switch to Light (White) Theme' : 'Switch to Dark Theme'}
           >
-            {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            {isDarkMode ? (
+              <Moon className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-transform duration-300 group-hover:-rotate-12" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-500 group-hover:text-amber-600 transition-transform duration-300 group-hover:rotate-45" />
+            )}
           </button>
 
           {/* Sign In Button or Profile Avatar */}

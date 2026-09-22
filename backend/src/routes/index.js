@@ -12,11 +12,13 @@ import k8sRoutes from './k8sRoutes.js';
 import labRoutes from './labRoutes.js';
 import progressRoutes from './progressRoutes.js';
 import byoaRoutes from './byoaRoutes.js';
+import standaloneAnalyzerRoutes from './standaloneAnalyzerRoutes.js';
 
 const router = express.Router();
 
 // Mount API Endpoints under /api/v1
 router.use('/auth', authRoutes);
+router.use('/analyzer', standaloneAnalyzerRoutes);
 router.use('/labs', labRoutes);
 router.use('/progress', progressRoutes);
 router.use('/byoa', byoaRoutes);

@@ -12,6 +12,10 @@ export const analyzerService = {
   getAnalysisReportById: async (projectId, analysisId) => {
     return await api.get(`/projects/${projectId}/analysis/${analysisId}`);
   },
+
+  analyzeRaw: async (content, type = 'auto') => {
+    return await api.post('/analyzer/raw', { content, type });
+  },
 };
 
 export default analyzerService;
