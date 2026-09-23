@@ -8,6 +8,7 @@ export const connectDB = async () => {
     });
 
     console.log(`[MongoDB] Connected successfully: ${conn.connection.host}/${conn.connection.name}`);
+    return conn;
   } catch (error) {
     console.error(`[MongoDB] Connection error: ${error.message}`);
     // Log error cleanly; in production environment, process.exit(1) can be toggled
