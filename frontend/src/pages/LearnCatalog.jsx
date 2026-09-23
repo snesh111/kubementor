@@ -416,7 +416,7 @@ export const LearnCatalog = () => {
               <div className="text-[10px] text-slate-500">Inspect pod exit code 1 &amp; crash logs</div>
               <div className="pt-2">
                 <span className="inline-block w-full py-1 text-center rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                  ● Real VM Environment
+                  Real Cluster Sandbox
                 </span>
               </div>
             </div>

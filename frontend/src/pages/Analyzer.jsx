@@ -281,12 +281,12 @@ export const Analyzer = () => {
             {isLoading ? (
               <>
                 <RotateCcw className="w-4 h-4 animate-spin" />
-                <span>Running AI Diagnosis...</span>
+                <span>Running Diagnosis...</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>Run AI Analysis ⚡</span>
+                <span>Run AI Analysis</span>
               </>
             )}
           </Button>
@@ -404,7 +404,7 @@ export const Analyzer = () => {
                         </p>
                         {f.recommendation && (
                           <p className="text-[11px] text-emerald-400 font-mono pt-1">
-                            💡 Fix: {f.recommendation}
+                            Fix: {f.recommendation}
                           </p>
                         )}
                       </div>
@@ -476,7 +476,8 @@ export const Analyzer = () => {
                   className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all"
                 >
                   <Terminal className="w-3.5 h-3.5" />
-                  <span>Launch Live Practice Sandbox ➔</span>
+                  <span>Launch Practice Sandbox</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </NavLink>
               </div>
             </div>

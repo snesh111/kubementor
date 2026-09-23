@@ -67,14 +67,9 @@ export class TerminalSession {
 
   initTerminal() {
     this.sendOutput('\x1b[2J\x1b[H'); // Clear screen
-    this.sendOutput(`\x1b[1;36m======================================================================\x1b[0m\r\n`);
-    this.sendOutput(`\x1b[1;37m☸️  KubeMentor Interactive Lab Shell\x1b[0m\r\n`);
-    this.sendOutput(`\x1b[90m----------------------------------------------------------------------\x1b[0m\r\n`);
-    this.sendOutput(` \x1b[1;33m● Environment\x1b[0m : ${this.mode === 'kubernetes' ? '\x1b[1;32mLIVE KUBERNETES\x1b[0m' : '\x1b[1;35mSIMULATION SANDBOX\x1b[0m'}\r\n`);
-    this.sendOutput(` \x1b[1;33m● Namespace\x1b[0m   : \x1b[1;36m${this.namespace}\x1b[0m\r\n`);
-    this.sendOutput(` \x1b[1;33m● Scenario\x1b[0m    : \x1b[1;37m${this.attempt?.scenarioName || this.attempt?.scenarioId || 'Active Lab'}\x1b[0m\r\n`);
-    this.sendOutput(`\x1b[1;36m======================================================================\x1b[0m\r\n`);
-    this.sendOutput(`\x1b[90mType \x1b[37m'kubectl get pods'\x1b[90m or \x1b[37m'help'\x1b[90m to begin your investigation.\x1b[0m\r\n\r\n`);
+    this.sendOutput(`\x1b[1;37mKubeMentor Interactive Lab Shell\x1b[0m\r\n`);
+    this.sendOutput(`\x1b[90mEnvironment: ${this.mode === 'kubernetes' ? 'Live Kubernetes' : 'Simulation Sandbox'} | Namespace: ${this.namespace} | Scenario: ${this.attempt?.scenarioName || this.attempt?.scenarioId || 'Active Lab'}\x1b[0m\r\n`);
+    this.sendOutput(`\x1b[90mType 'kubectl get pods' or 'help' to begin your investigation.\x1b[0m\r\n\r\n`);
     this.sendOutput(this.getPrompt());
   }
 

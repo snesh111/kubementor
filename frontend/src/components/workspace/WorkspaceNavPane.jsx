@@ -184,9 +184,7 @@ export const WorkspaceNavPane = ({
                           {isActive ? (
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
                           ) : item.isLive ? (
-                            <span className="text-[10px] font-mono text-slate-600 group-hover:text-slate-400">
-                              ○
-                            </span>
+                            <span className="w-1.5 h-1.5 rounded-full border border-slate-700 group-hover:border-slate-500 inline-block"></span>
                           ) : (
                             <LockKeyhole className="w-3 h-3 text-slate-600" />
                           )}

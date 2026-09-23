@@ -95,7 +95,7 @@ export const Sidebar = () => {
                   <span>{item.label}</span>
                 </div>
                 {isItemActive && (
-                  <span className={`${item.dotColor} text-[10px] font-mono`}>●</span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${item.dotColor?.replace('text-', 'bg-') || 'bg-emerald-400'}`}></span>
                 )}
               </NavLink>
             );
@@ -108,7 +108,7 @@ export const Sidebar = () => {
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-mono font-bold text-slate-200 truncate">Simulation Cluster</p>
-            <p className="text-[10px] font-mono text-emerald-400/90 truncate">● Active &amp; Isolated</p>
+            <p className="text-[10px] font-mono text-emerald-400/90 truncate">Active &amp; Isolated</p>
           </div>
         </div>
       </div>

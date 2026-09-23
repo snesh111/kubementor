@@ -181,7 +181,7 @@ export const WorkspaceMissionPane = ({
                       </div>
 
                       {i < currentStep.flow.length - 1 && (
-                        <div className="text-slate-500 font-bold hidden sm:block">➔</div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-600 hidden sm:block shrink-0" />
                       )}
                     </React.Fragment>
                   ))}

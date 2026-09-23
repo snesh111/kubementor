@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Sparkles,
+  X,
 } from 'lucide-react';
 import Button from '../common/Button';
 import labService from '../../services/labService';
@@ -256,9 +257,9 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
           <button
             type="button"
             onClick={() => setValidationError(null)}
-            className="text-rose-400 hover:text-rose-200 text-xs font-bold"
+            className="text-rose-400 hover:text-rose-200 p-0.5 rounded cursor-pointer"
           >
-            ✕
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -322,9 +323,9 @@ export const YamlEditorPane = ({ session, onSelectTab }) => {
               <button
                 type="button"
                 onClick={() => setDeploymentResult(null)}
-                className="text-slate-400 hover:text-slate-200 text-xs px-1 cursor-pointer"
+                className="text-slate-400 hover:text-slate-200 p-0.5 rounded cursor-pointer"
               >
-                ✕
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

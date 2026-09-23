@@ -18,7 +18,7 @@ export const SCENARIO_STEPS_DATA = {
         flow: [
           { label: 'KUBELET', sub: 'Starts Container', color: 'emerald' },
           { label: 'PROCESS', sub: 'Exit Code 1 / Error', color: 'rose' },
-          { label: 'BACK-OFF', sub: 'Delay (10s ➔ 5m)', color: 'amber' },
+          { label: 'BACK-OFF', sub: 'Delay (10s - 5m)', color: 'amber' },
         ],
         keyTakeaways: [
           'CrashLoopBackOff is NOT the error itself—it is the symptom of a process crashing inside the container.',
@@ -152,7 +152,7 @@ export const SCENARIO_STEPS_DATA = {
         flow: [
           { label: 'KUBELET', sub: 'Pulls Image', color: 'emerald' },
           { label: 'REGISTRY', sub: '404 Not Found / Typo', color: 'rose' },
-          { label: 'BACK-OFF', sub: 'Retry (10s ➔ 5m)', color: 'amber' },
+          { label: 'BACK-OFF', sub: 'Retry (10s - 5m)', color: 'amber' },
         ],
         keyTakeaways: [
           'ErrImagePull is the initial failure when attempting to download.',

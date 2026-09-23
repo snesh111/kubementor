@@ -14,6 +14,7 @@ import {
   Terminal,
   FileCode2,
   Sparkles,
+  X,
 } from 'lucide-react';
 import Button from '../common/Button';
 import labService from '../../services/labService';
@@ -213,9 +214,9 @@ export const ScratchpadPane = ({ session, onSelectTab }) => {
           <button
             type="button"
             onClick={() => setSaveError(null)}
-            className="text-rose-400 hover:text-rose-200 text-xs font-bold"
+            className="text-rose-400 hover:text-rose-200 p-0.5 rounded transition-colors cursor-pointer"
           >
-            ✕
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}

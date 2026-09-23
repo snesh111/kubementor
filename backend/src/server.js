@@ -20,15 +20,7 @@ const startServer = async () => {
 
     // 3. Start HTTP Server
     const server = app.listen(config.port, () => {
-      console.log(`
-=====================================================
-🚀 KubeMentor Server Running!
------------------------------------------------------
-🌐 Environment : ${config.nodeEnv}
-🔌 Port        : ${config.port}
-🔗 Base API     : http://localhost:${config.port}/api/v1
-=====================================================
-      `);
+      console.log(`[KubeMentor Server] Running on http://localhost:${config.port}/api/v1 (${config.nodeEnv})`);
     });
 
     // 4. Attach Interactive Terminal WebSocket Server
