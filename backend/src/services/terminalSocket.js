@@ -13,7 +13,7 @@ const activeSessions = new Map(); // socketId -> { session, ws, timer }
 export const initTerminalWebSocket = (httpServer) => {
   const wss = new WebSocketServer({
     server: httpServer,
-    path: '/ws/terminal',
+    path: '/api/ws/terminal',
   });
 
   console.log('[Terminal Socket] WebSocket server initialized on path: /ws/terminal');
