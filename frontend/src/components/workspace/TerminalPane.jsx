@@ -52,7 +52,7 @@ export const TerminalPane = ({
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws/terminal?token=${encodeURIComponent(token)}&labId=${encodeURIComponent(session.labId)}`;
+    const wsUrl = `${protocol}//${host}/api/v1/ws/terminal?token=${encodeURIComponent(token)}&labId=${encodeURIComponent(session.labId)}`;
 
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
